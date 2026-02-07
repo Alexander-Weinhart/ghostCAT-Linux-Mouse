@@ -54,20 +54,20 @@ udev_device_from_path(struct udev *udev, const char *path)
 }
 
 const char *
-led_mode_to_str(enum ratbag_led_mode mode)
+led_mode_to_str(enum ghostcat_led_mode mode)
 {
 	const char *str = "UNKNOWN";
 	switch (mode) {
-	case RATBAG_LED_OFF:
+	case GHOSTCAT_LED_OFF:
 		str = "off";
 		break;
-	case RATBAG_LED_ON:
+	case GHOSTCAT_LED_ON:
 		str = "on";
 		break;
-	case RATBAG_LED_CYCLE:
+	case GHOSTCAT_LED_CYCLE:
 		str = "cycle";
 		break;
-	case RATBAG_LED_BREATHING:
+	case GHOSTCAT_LED_BREATHING:
 		str = "breathing";
 		break;
 	}
@@ -76,52 +76,52 @@ led_mode_to_str(enum ratbag_led_mode mode)
 }
 
 static const struct map {
-	enum ratbag_button_action_special special;
+	enum ghostcat_button_action_special special;
 	const char *str;
 } special_map[] =  {
-	{ RATBAG_BUTTON_ACTION_SPECIAL_UNKNOWN,			"unknown" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_DOUBLECLICK,		"doubleclick" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_UNKNOWN,			"unknown" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_DOUBLECLICK,		"doubleclick" },
 
 	/* Wheel mappings */
-	{ RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_LEFT,		"wheel left" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT,		"wheel right" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP,		"wheel up" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN,		"wheel down" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RATCHET_MODE_SWITCH,	"ratchet mode switch" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_LEFT,		"wheel left" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT,		"wheel right" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP,		"wheel up" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN,		"wheel down" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RATCHET_MODE_SWITCH,	"ratchet mode switch" },
 
 	/* DPI switch */
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP,	"resolution cycle up" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_DOWN,	"resolution cycle down" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP,		"resolution up" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN,		"resolution down" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE,	"resolution alternate" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DEFAULT,	"resolution default" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP,	"resolution cycle up" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_DOWN,	"resolution cycle down" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP,		"resolution up" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN,		"resolution down" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE,	"resolution alternate" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DEFAULT,	"resolution default" },
 
 	/* Profile */
-	{ RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP,	"profile cycle up" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_DOWN,	"profile cycle down" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_UP,		"profile up" },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_DOWN,		"profile down" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP,	"profile cycle up" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_DOWN,	"profile cycle down" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_UP,		"profile up" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_DOWN,		"profile down" },
 
 	/* Second mode for buttons */
-	{ RATBAG_BUTTON_ACTION_SPECIAL_SECOND_MODE,		"secondary mode" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_SECOND_MODE,		"secondary mode" },
 
 	/* battery level */
-	{ RATBAG_BUTTON_ACTION_SPECIAL_BATTERY_LEVEL,		"battery level" },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_BATTERY_LEVEL,		"battery level" },
 
 	/* must be the last entry in the table */
-	{ RATBAG_BUTTON_ACTION_SPECIAL_INVALID,		NULL },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_INVALID,		NULL },
 };
 
 const char *
-button_action_special_to_str(struct ratbag_button *button)
+button_action_special_to_str(struct ghostcat_button *button)
 {
-	enum ratbag_button_action_special special;
+	enum ghostcat_button_action_special special;
 	const struct map *m = special_map;
 
-	special = ratbag_button_get_special(button);
+	special = ghostcat_button_get_special(button);
 
-	while (m->special != RATBAG_BUTTON_ACTION_SPECIAL_INVALID) {
+	while (m->special != GHOSTCAT_BUTTON_ACTION_SPECIAL_INVALID) {
 		if (m->special == special)
 			return m->str;
 		m++;
@@ -130,21 +130,21 @@ button_action_special_to_str(struct ratbag_button *button)
 }
 
 char *
-button_action_button_to_str(struct ratbag_button *button)
+button_action_button_to_str(struct ghostcat_button *button)
 {
 	char str[96];
 
-	sprintf_safe(str, "button %d", ratbag_button_get_button(button));
+	sprintf_safe(str, "button %d", ghostcat_button_get_button(button));
 
 	return strdup_safe(str);
 }
 
 char *
-button_action_key_to_str(struct ratbag_button *button)
+button_action_key_to_str(struct ghostcat_button *button)
 {
 	const char *str;
 
-	str = libevdev_event_code_get_name(EV_KEY, ratbag_button_get_key(button));
+	str = libevdev_event_code_get_name(EV_KEY, ghostcat_button_get_key(button));
 	if (!str)
 		str = "UNKNOWN";
 
@@ -161,16 +161,16 @@ static const char *strip_ev_key(int key)
 };
 
 char *
-button_action_macro_to_str(struct ratbag_button *button)
+button_action_macro_to_str(struct ghostcat_button *button)
 {
-	struct ratbag_button_macro *macro;
+	struct ghostcat_button_macro *macro;
 	char str[4096] = {0};
 	const char *name;
 	int offset;
 	unsigned int i;
 
-	macro = ratbag_button_get_macro(button);
-	name = ratbag_button_macro_get_name(macro);
+	macro = ghostcat_button_get_macro(button);
+	name = ghostcat_button_macro_get_name(macro);
 	offset = snprintf(str, sizeof(str), "macro \"%s\":",
 			  name ? name : "UNKNOWN");
 	for (i = 0; i < MAX_MACRO_EVENTS; i++) {
@@ -178,21 +178,21 @@ button_action_macro_to_str(struct ratbag_button *button)
 			break;
 		}
 
-		enum ratbag_macro_event_type type = ratbag_button_macro_get_event_type(macro, i);
-		int key = ratbag_button_macro_get_event_key(macro, i);
-		int timeout = ratbag_button_macro_get_event_timeout(macro, i);
+		enum ghostcat_macro_event_type type = ghostcat_button_macro_get_event_type(macro, i);
+		int key = ghostcat_button_macro_get_event_key(macro, i);
+		int timeout = ghostcat_button_macro_get_event_timeout(macro, i);
 
-		if (type == RATBAG_MACRO_EVENT_NONE)
+		if (type == GHOSTCAT_MACRO_EVENT_NONE)
 			break;
 
 		switch (type) {
-		case RATBAG_MACRO_EVENT_KEY_PRESSED:
+		case GHOSTCAT_MACRO_EVENT_KEY_PRESSED:
 			offset += snprintf(str + offset, sizeof(str) - offset, " %s↓", strip_ev_key(key));
 			break;
-		case RATBAG_MACRO_EVENT_KEY_RELEASED:
+		case GHOSTCAT_MACRO_EVENT_KEY_RELEASED:
 			offset += snprintf(str + offset, sizeof(str) - offset, " %s↑", strip_ev_key(key));
 			break;
-		case RATBAG_MACRO_EVENT_WAIT:
+		case GHOSTCAT_MACRO_EVENT_WAIT:
 			offset += snprintf(str + offset, sizeof(str) - offset, " %.03f⏱", timeout / 1000.0);
 			break;
 		default:
@@ -200,25 +200,25 @@ button_action_macro_to_str(struct ratbag_button *button)
 		}
 	}
 
-	ratbag_button_macro_unref(macro);
+	ghostcat_button_macro_unref(macro);
 
 	return strdup_safe(str);
 }
 
 char *
-button_action_to_str(struct ratbag_button *button)
+button_action_to_str(struct ghostcat_button *button)
 {
-	enum ratbag_button_action_type type;
+	enum ghostcat_button_action_type type;
 	char *str;
 
-	type = ratbag_button_get_action_type(button);
+	type = ghostcat_button_get_action_type(button);
 
 	switch (type) {
-	case RATBAG_BUTTON_ACTION_TYPE_BUTTON:	str = button_action_button_to_str(button); break;
-	case RATBAG_BUTTON_ACTION_TYPE_KEY:	str = button_action_key_to_str(button); break;
-	case RATBAG_BUTTON_ACTION_TYPE_SPECIAL:	str = strdup_safe(button_action_special_to_str(button)); break;
-	case RATBAG_BUTTON_ACTION_TYPE_MACRO:	str = button_action_macro_to_str(button); break;
-	case RATBAG_BUTTON_ACTION_TYPE_NONE:	str = strdup_safe("none"); break;
+	case GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON:	str = button_action_button_to_str(button); break;
+	case GHOSTCAT_BUTTON_ACTION_TYPE_KEY:	str = button_action_key_to_str(button); break;
+	case GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL:	str = strdup_safe(button_action_special_to_str(button)); break;
+	case GHOSTCAT_BUTTON_ACTION_TYPE_MACRO:	str = button_action_macro_to_str(button); break;
+	case GHOSTCAT_BUTTON_ACTION_TYPE_NONE:	str = strdup_safe("none"); break;
 	default:
 		error("type %d unknown\n", type);
 		str = strdup_safe("UNKNOWN");
@@ -227,28 +227,28 @@ button_action_to_str(struct ratbag_button *button)
 	return str;
 }
 
-struct ratbag_device *
-ratbag_cmd_open_device(struct ratbag *ratbag, const char *path)
+struct ghostcat_device *
+ghostcat_cmd_open_device(struct ghostcat *ratbag, const char *path)
 {
-	struct ratbag_device *device;
+	struct ghostcat_device *device;
 	_cleanup_(udev_unrefp) struct udev *udev = NULL;
 	_cleanup_(udev_device_unrefp) struct udev_device *udev_device = NULL;
-	enum ratbag_error_code error;
+	enum ghostcat_error_code error;
 
 	udev = udev_new();
 	udev_device = udev_device_from_path(udev, path);
 	if (!udev_device)
 		return NULL;
 
-	error = ratbag_device_new_from_udev_device(ratbag, udev_device,
+	error = ghostcat_device_new_from_udev_device(ratbag, udev_device,
 						   &device);
-	if (error != RATBAG_SUCCESS)
+	if (error != GHOSTCAT_SUCCESS)
 		return NULL;
 
 	return device;
 }
 
-enum ratbag_button_action_special
+enum ghostcat_button_action_special
 str_to_special_action(const char *str) {
 	const struct map *m = special_map;
 
@@ -257,7 +257,7 @@ str_to_special_action(const char *str) {
 			return m->special;
 		m++;
 	}
-	return RATBAG_BUTTON_ACTION_SPECIAL_INVALID;
+	return GHOSTCAT_BUTTON_ACTION_SPECIAL_INVALID;
 }
 
 
@@ -279,7 +279,7 @@ close_restricted(int fd, void *user_data)
 	close(fd);
 }
 
-const struct ratbag_interface interface = {
+const struct ghostcat_interface interface = {
 	.open_restricted = open_restricted,
 	.close_restricted = close_restricted,
 };

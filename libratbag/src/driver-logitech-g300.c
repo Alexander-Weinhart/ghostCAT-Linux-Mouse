@@ -30,8 +30,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
 
 #define LOGITECH_G300_PROFILE_MAX			2
 #define LOGITECH_G300_BUTTON_MAX			8
@@ -86,7 +86,7 @@ _Static_assert(sizeof(struct logitech_g300_profile_report) == LOGITECH_G300_REPO
 
 struct logitech_g300_button_mapping {
 	uint8_t raw;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 static struct logitech_g300_button_mapping logitech_g300_button_mapping[] = {
@@ -100,15 +100,15 @@ static struct logitech_g300_button_mapping logitech_g300_button_mapping[] = {
 	{ 0x07, BUTTON_ACTION_BUTTON(7) },
 	{ 0x08, BUTTON_ACTION_BUTTON(8) },
 	{ 0x09, BUTTON_ACTION_BUTTON(9) },
-	{ 0x0A, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
-	{ 0x0B, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
-	{ 0x0C, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
-	{ 0x0D, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
-	{ 0x0E, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE) },
-	{ 0x0F, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DEFAULT) },
+	{ 0x0A, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
+	{ 0x0B, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
+	{ 0x0C, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
+	{ 0x0D, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
+	{ 0x0E, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE) },
+	{ 0x0F, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DEFAULT) },
 };
 
-static const struct ratbag_button_action*
+static const struct ghostcat_button_action*
 logitech_g300_raw_to_button_action(uint8_t data)
 {
 	struct logitech_g300_button_mapping *mapping;
@@ -170,12 +170,12 @@ static int logitech_g300_raw_to_modifiers(uint8_t data)
 }
 
 static uint8_t
-logitech_g300_button_action_to_raw(const struct ratbag_button_action *action)
+logitech_g300_button_action_to_raw(const struct ghostcat_button_action *action)
 {
 	struct logitech_g300_button_mapping *mapping;
 
 	ARRAY_FOR_EACH(logitech_g300_button_mapping, mapping) {
-		if (ratbag_button_action_match(&mapping->action, action))
+		if (ghostcat_button_action_match(&mapping->action, action))
 			return mapping->raw;
 	}
 
@@ -231,13 +231,13 @@ struct logitech_g300_F0_report {
 
 
 static int
-logitech_g300_get_active_profile_and_resolution(struct ratbag_device *device)
+logitech_g300_get_active_profile_and_resolution(struct ghostcat_device *device)
 {
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	struct logitech_g300_F0_report buf;
 	int ret;
 
-	ret = ratbag_hidraw_raw_request(device, 0xF0, (uint8_t*)&buf,
+	ret = ghostcat_hidraw_raw_request(device, 0xF0, (uint8_t*)&buf,
 			sizeof(buf), HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 
 	if (ret < 0)
@@ -247,13 +247,13 @@ logitech_g300_get_active_profile_and_resolution(struct ratbag_device *device)
 		return -EIO;
 
 	list_for_each(profile, &device->profiles, link) {
-		struct ratbag_resolution *resolution;
+		struct ghostcat_resolution *resolution;
 
 		if (profile->index != buf.profile)
 			continue;
 
 		profile->is_active = true;
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			resolution->is_active = resolution->index == buf.resolution;
 		}
 	}
@@ -262,16 +262,16 @@ logitech_g300_get_active_profile_and_resolution(struct ratbag_device *device)
 }
 
 static int
-logitech_g300_set_active_profile(struct ratbag_device *device, unsigned int index)
+logitech_g300_set_active_profile(struct ghostcat_device *device, unsigned int index)
 {
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	uint8_t buf[] = {LOGITECH_G300_REPORT_ID_SET_ACTIVE, 0x80 | (index << 4), 0x00, 0x00};
 	int ret;
 
 	if (index > LOGITECH_G300_PROFILE_MAX)
 		return -EINVAL;
 
-	ret = ratbag_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
+	ret = ghostcat_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
 			HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
 	if (ret != sizeof(buf))
@@ -279,12 +279,12 @@ logitech_g300_set_active_profile(struct ratbag_device *device, unsigned int inde
 
 	/* Update the active resolution. After profile change the default is used. */
 	list_for_each(profile, &device->profiles, link) {
-		struct ratbag_resolution *resolution;
+		struct ghostcat_resolution *resolution;
 
 		if (profile->index != index)
 			continue;
 
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			resolution->is_active = resolution->is_default;
 		}
 	}
@@ -293,7 +293,7 @@ logitech_g300_set_active_profile(struct ratbag_device *device, unsigned int inde
 }
 
 static int
-logitech_g300_set_current_resolution(struct ratbag_device *device, unsigned int index)
+logitech_g300_set_current_resolution(struct ghostcat_device *device, unsigned int index)
 {
 	uint8_t buf[] = {LOGITECH_G300_REPORT_ID_SET_ACTIVE, 0x40 | (index << 1), 0x00, 0x00};
 	int ret;
@@ -301,18 +301,18 @@ logitech_g300_set_current_resolution(struct ratbag_device *device, unsigned int 
 	if (index >= LOGITECH_G300_NUM_DPI)
 		return -EINVAL;
 
-	ret = ratbag_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
+	ret = ghostcat_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
 			HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
 	return ret == sizeof(buf) ? 0 : ret;
 }
 
 static void
-logitech_g300_read_button(struct ratbag_button *button)
+logitech_g300_read_button(struct ghostcat_button *button)
 {
-	const struct ratbag_button_action *action;
-	struct ratbag_profile *profile = button->profile;
-	struct ratbag_device *device = profile->device;
+	const struct ghostcat_button_action *action;
+	struct ghostcat_profile *profile = button->profile;
+	struct ghostcat_device *device = profile->device;
 	struct logitech_g300_data *drv_data = device->drv_data;
 	struct logitech_g300_profile_data *pdata;
 	struct logitech_g300_profile_report *profile_report;
@@ -322,39 +322,39 @@ logitech_g300_read_button(struct ratbag_button *button)
 	profile_report = &pdata->report;
 	button_report = &profile_report->buttons[button->index];
 
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_NONE);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_MACRO);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_NONE);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_MACRO);
 
 	action = logitech_g300_raw_to_button_action(button_report->code);
 	if (action) {
-		ratbag_button_set_action(button, action);
+		ghostcat_button_set_action(button, action);
 	}
 	else if (button_report->code == 0x00 && (button_report->modifier > 0x00 || button_report->key > 0x00))
 	{
 		unsigned int key, modifiers;
 		int rc;
 
-		key = ratbag_hidraw_get_keycode_from_keyboard_usage(device,
+		key = ghostcat_hidraw_get_keycode_from_keyboard_usage(device,
 								    button_report->key);
 		modifiers = logitech_g300_raw_to_modifiers(button_report->modifier);
 
-		rc = ratbag_button_macro_new_from_keycode(button, key, modifiers);
+		rc = ghostcat_button_macro_new_from_keycode(button, key, modifiers);
 		if (rc < 0) {
 			log_error(device->ratbag,
 				  "Error while reading button %d\n",
 				  button->index);
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 		}
 	}
 }
 
 static void
-logitech_g300_read_led(struct ratbag_led *led)
+logitech_g300_read_led(struct ghostcat_led *led)
 {
-	struct ratbag_profile *profile = led->profile;
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_profile *profile = led->profile;
+	struct ghostcat_device *device = profile->device;
 	struct logitech_g300_data *drv_data = device->drv_data;
 	struct logitech_g300_profile_data *pdata;
 	struct logitech_g300_profile_report *profile_report;
@@ -362,28 +362,28 @@ logitech_g300_read_led(struct ratbag_led *led)
 	pdata = &drv_data->profile_data[profile->index];
 	profile_report = &pdata->report;
 
-	led->mode = RATBAG_LED_ON;
-	led->colordepth = RATBAG_LED_COLORDEPTH_RGB_111;
+	led->mode = GHOSTCAT_LED_ON;
+	led->colordepth = GHOSTCAT_LED_COLORDEPTH_RGB_111;
 	led->color.red = profile_report->led_red * 255;
 	led->color.green = profile_report->led_green * 255;
 	led->color.blue = profile_report->led_blue * 255;
-	ratbag_led_set_mode_capability(led, RATBAG_LED_OFF);
-	ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
+	ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_OFF);
+	ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
 }
 
 static void
-logitech_g300_read_profile(struct ratbag_profile *profile)
+logitech_g300_read_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct logitech_g300_data *drv_data = device->drv_data;
 	struct logitech_g300_profile_data *pdata;
 	struct logitech_g300_profile_report *report;
-	struct ratbag_resolution *resolution;
+	struct ghostcat_resolution *resolution;
 	unsigned int hz;
 	uint8_t report_id;
 	int rc;
-	struct ratbag_button *button;
-	struct ratbag_led *led;
+	struct ghostcat_button *button;
+	struct ghostcat_led *led;
 
 	assert(profile->index <= LOGITECH_G300_PROFILE_MAX);
 
@@ -400,7 +400,7 @@ logitech_g300_read_profile(struct ratbag_profile *profile)
 		break;
 	}
 
-	rc = ratbag_hidraw_raw_request(device, report_id,
+	rc = ghostcat_hidraw_raw_request(device, report_id,
 					       (uint8_t*)report,
 					       sizeof(*report),
 					       HID_FEATURE_REPORT,
@@ -414,10 +414,10 @@ logitech_g300_read_profile(struct ratbag_profile *profile)
 
 	hz = logitech_g300_raw_to_frequency(report->frequency);
 
-	ratbag_profile_set_report_rate_list(profile, &hz, 1);
+	ghostcat_profile_set_report_rate_list(profile, &hz, 1);
 	profile->hz = hz;
 
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		struct logitech_g300_resolution *res =
 			&report->dpi_levels[resolution->index];
 		unsigned int dpis[10] = { 250, 500, 750, 1000, 1250, 1500, 1750,
@@ -428,46 +428,46 @@ logitech_g300_read_profile(struct ratbag_profile *profile)
 		resolution->is_default = res->is_default;
 		resolution->is_active = res->is_default;
 
-		ratbag_resolution_set_dpi_list(resolution, dpis,
+		ghostcat_resolution_set_dpi_list(resolution, dpis,
 					       ARRAY_LENGTH(dpis));
 	}
 
-	ratbag_profile_for_each_button(profile, button)
+	ghostcat_profile_for_each_button(profile, button)
 		logitech_g300_read_button(button);
 
-	ratbag_profile_for_each_led(profile, led)
+	ghostcat_profile_for_each_led(profile, led)
 		logitech_g300_read_led(led);
 }
 
 static int
-logitech_g300_test_hidraw(struct ratbag_device *device)
+logitech_g300_test_hidraw(struct ghostcat_device *device)
 {
-	return ratbag_hidraw_has_report(device, LOGITECH_G300_REPORT_ID_GET_ACTIVE);
+	return ghostcat_hidraw_has_report(device, LOGITECH_G300_REPORT_ID_GET_ACTIVE);
 }
 
 static int
-logitech_g300_probe(struct ratbag_device *device)
+logitech_g300_probe(struct ghostcat_device *device)
 {
 	int rc;
 	struct logitech_g300_data *drv_data = NULL;
 	int active_idx;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 
-	rc = ratbag_find_hidraw(device, logitech_g300_test_hidraw);
+	rc = ghostcat_find_hidraw(device, logitech_g300_test_hidraw);
 	if (rc)
 		goto err;
 
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 
 	/* profiles are 0-indexed */
-	ratbag_device_init_profiles(device,
+	ghostcat_device_init_profiles(device,
 				    LOGITECH_G300_PROFILE_MAX + 1,
 				    LOGITECH_G300_NUM_DPI,
 				    LOGITECH_G300_BUTTON_MAX + 1,
 				    LOGITECH_G300_NUM_LED);
 
-	ratbag_device_for_each_profile(device, profile)
+	ghostcat_device_for_each_profile(device, profile)
 		logitech_g300_read_profile(profile);
 
 	active_idx = logitech_g300_get_active_profile_and_resolution(device);
@@ -483,27 +483,27 @@ logitech_g300_probe(struct ratbag_device *device)
 
 	log_raw(device->ratbag,
 		"'%s' is in profile %d\n",
-		ratbag_device_get_name(device),
+		ghostcat_device_get_name(device),
 		active_idx);
 
 	return 0;
 
 err:
 	free(drv_data);
-	ratbag_set_drv_data(device, NULL);
+	ghostcat_set_drv_data(device, NULL);
 	return rc;
 }
 
 static int
-logitech_g300_write_profile(struct ratbag_profile *profile)
+logitech_g300_write_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct logitech_g300_data *drv_data = device->drv_data;
 	struct logitech_g300_profile_data *pdata;
 	struct logitech_g300_profile_report *report;
-	struct ratbag_resolution *resolution;
-	struct ratbag_button *button;
-	struct ratbag_led *led;
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_button *button;
+	struct ghostcat_led *led;
 
 	uint8_t *buf;
 	int rc;
@@ -513,7 +513,7 @@ logitech_g300_write_profile(struct ratbag_profile *profile)
 
 	report->frequency = logitech_g300_frequency_to_raw(profile->hz);
 
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		struct logitech_g300_resolution *res =
 			&report->dpi_levels[resolution->index];
 
@@ -526,7 +526,7 @@ logitech_g300_write_profile(struct ratbag_profile *profile)
 	}
 
 	list_for_each(button, &profile->buttons, link) {
-		struct ratbag_button_action *action = &button->action;
+		struct ghostcat_button_action *action = &button->action;
 		struct logitech_g300_button *raw_button;
 
 		if (!button->dirty)
@@ -538,10 +538,10 @@ logitech_g300_write_profile(struct ratbag_profile *profile)
 		raw_button->modifier = 0x00;
 		raw_button->key = 0x00;
 
-		if (action->type == RATBAG_BUTTON_ACTION_TYPE_MACRO) {
+		if (action->type == GHOSTCAT_BUTTON_ACTION_TYPE_MACRO) {
 			unsigned int key, modifiers;
 
-			rc = ratbag_action_keycode_from_macro(action,
+			rc = ghostcat_action_keycode_from_macro(action,
 							      &key,
 							      &modifiers);
 			if (rc < 0) {
@@ -550,7 +550,7 @@ logitech_g300_write_profile(struct ratbag_profile *profile)
 					  button->index);
 			}
 
-			raw_button->key = ratbag_hidraw_get_keyboard_usage_from_keycode(
+			raw_button->key = ghostcat_hidraw_get_keyboard_usage_from_keycode(
 						device, key);
 			raw_button->modifier = logitech_g300_modifier_to_raw(modifiers);
 		}
@@ -569,7 +569,7 @@ logitech_g300_write_profile(struct ratbag_profile *profile)
 
 	buf = (uint8_t*)report;
 
-	rc = ratbag_hidraw_raw_request(device, report->id,
+	rc = ghostcat_hidraw_raw_request(device, report->id,
 				       buf,
 				       sizeof(*report),
 				       HID_FEATURE_REPORT,
@@ -585,9 +585,9 @@ logitech_g300_write_profile(struct ratbag_profile *profile)
 }
 
 static int
-logitech_g300_commit(struct ratbag_device *device)
+logitech_g300_commit(struct ghostcat_device *device)
 {
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	int rc = 0;
 
 	list_for_each(profile, &device->profiles, link) {
@@ -606,13 +606,13 @@ logitech_g300_commit(struct ratbag_device *device)
 }
 
 static void
-logitech_g300_remove(struct ratbag_device *device)
+logitech_g300_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
-struct ratbag_driver logitech_g300_driver = {
+struct ghostcat_driver logitech_g300_driver = {
 	.name = "Logitech G300",
 	.id = "logitech_g300",
 	.probe = logitech_g300_probe,

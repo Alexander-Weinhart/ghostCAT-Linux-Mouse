@@ -32,7 +32,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "libratbag-util.h"
+#include "libghostcat-util.h"
 
 #define HIDPP_RECEIVER_IDX			0xFF
 #define HIDPP_WIRED_DEVICE_IDX			0x00
@@ -78,7 +78,7 @@
 #define HIDPP20_ERR_BUSY			0x08
 #define HIDPP20_ERR_UNSUPPORTED			0x09
 
-/* Keep this in sync with ratbag_log_priority */
+/* Keep this in sync with ghostcat_log_priority */
 enum hidpp_log_priority {
 	/**
 	 * Raw protocol messages. Using this log level results in *a lot* of
@@ -132,11 +132,11 @@ hidpp20_led_get_location_mapping_name(uint16_t value);
 const char *
 hidpp20_1b04_get_logical_mapping_name(uint16_t value);
 
-const struct ratbag_button_action *
+const struct ghostcat_button_action *
 hidpp20_1b04_get_logical_mapping(uint16_t value);
 
 uint16_t
-hidpp20_1b04_get_logical_control_id(const struct ratbag_button_action *action);
+hidpp20_1b04_get_logical_control_id(const struct ghostcat_button_action *action);
 
 int
 hidpp_write_command(struct hidpp_device *dev, uint8_t *cmd, int size);

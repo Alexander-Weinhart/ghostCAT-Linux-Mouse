@@ -14,7 +14,7 @@ files](https://github.com/libratbag/libratbag/tree/master/data/devices) for
 a complete list of supported devices.
 
 Users interact through a GUI like
-[Piper](https://github.com/libratbag/piper/). For developers, the
+[GhostCAT](https://github.com/libratbag/piper/). For developers, the
 `ratbagctl` tool is the prime tool for debugging.
 
 Installing libratbag from system packages
@@ -95,11 +95,11 @@ libratbag Internal Architecture
 -------------------------------
 
 libratbag has two main components, libratbag and ratbagd. Applications like
-Piper talk over DBus to ratbagd. ratbagd uses libratbag to access the actual
+GhostCAT talk over DBus to ratbagd. ratbagd uses libratbag to access the actual
 devices.
 
     +-------+    +------+    +---------+    +-----------+
-    | Piper | -> | DBus | -> | ratbagd | -> | libratbag | -> device
+    | GhostCAT | -> | DBus | -> | ratbagd | -> | libratbag | -> device
     +-------+    +------+    +---------+    +-----------+
 
 

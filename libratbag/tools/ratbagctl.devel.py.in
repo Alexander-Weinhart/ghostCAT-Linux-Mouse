@@ -32,7 +32,7 @@ import sys
 from ratbagctl import RatbagCapabilityError  # NOQA
 
 
-def main(argv, start_ratbagd=True):
+def main(argv, start_ghostcatd=True):
     if os.geteuid() != 0:
         sys.exit("Script must be run as root")
 
@@ -44,7 +44,7 @@ def main(argv, start_ratbagd=True):
         argv = ["list"]
 
     cmd = None
-    ratbagd_process = None
+    ghostcatd_process = None
     try:
         parser = toolbox.get_parser()
         parser.want_keepalive = True
@@ -53,14 +53,14 @@ def main(argv, start_ratbagd=True):
             parser.print_help()
             return
 
-        if start_ratbagd:
-            ratbagd_process = toolbox.start_ratbagd(verbosity=cmd.verbose)
-            if ratbagd_process is None:
-                sys.exit("Failed to start or connect to ratbagd")
+        if start_ghostcatd:
+            ghostcatd_process = toolbox.start_ghostcatd(verbosity=cmd.verbose)
+            if ghostcatd_process is None:
+                sys.exit("Failed to start or connect to ghostcatd")
 
-        _ratbagd = toolbox.open_ratbagd()
-        if _ratbagd is not None:
-            with _ratbagd as ratbagd:
+        _ghostcatd = toolbox.open_ghostcatd()
+        if _ghostcatd is not None:
+            with _ghostcatd as ghostcatd:
                 try:
                     f = cmd.func
                 except AttributeError:
@@ -68,8 +68,8 @@ def main(argv, start_ratbagd=True):
                     return
                 else:
                     try:
-                        f(ratbagd, cmd)
-                        # give time for ratbagd to receive async requests before
+                        f(ghostcatd, cmd)
+                        # give time for ghostcatd to receive async requests before
                         # we try to terminate it
                         time.sleep(0.5)
                     except RatbagCapabilityError as e:
@@ -85,20 +85,20 @@ def main(argv, start_ratbagd=True):
         except AttributeError:  # in case the parsing failed and cmd is None
             pass
 
-        if ratbagd_process:
-            toolbox.terminate_ratbagd(ratbagd_process)
+        if ghostcatd_process:
+            toolbox.terminate_ghostcatd(ghostcatd_process)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="commandline tool to access the ratbagd.devel debug server"
+        description="commandline tool to access the ghostcatd.devel debug server"
     )
     parser.add_argument(
-        "--use-existing-ratbagd",
+        "--use-existing-ghostcatd",
         dest="use_existing",
         action="store_true",
         default=False,
-        help="Don't start up ratbagd.devel, connect to the already running one",
+        help="Don't start up ghostcatd.devel, connect to the already running one",
     )
 
     args, remainder = parser.parse_known_args()

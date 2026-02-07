@@ -547,11 +547,11 @@ int
 hidpp10_set_profile(struct hidpp10_device *dev, uint8_t number,
 		    struct hidpp10_profile *profile);
 
-enum ratbag_button_action_special
+enum ghostcat_button_action_special
 hidpp10_onboard_profiles_get_special(uint8_t code);
 
 uint8_t
-hidpp10_onboard_profiles_get_code_from_special(enum ratbag_button_action_special special);
+hidpp10_onboard_profiles_get_code_from_special(enum ghostcat_button_action_special special);
 
 /* -------------------------------------------------------------------------- */
 /* 0x51: LED Status                                                           */

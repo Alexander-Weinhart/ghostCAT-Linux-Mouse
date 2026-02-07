@@ -34,7 +34,7 @@
 #include <poll.h>
 #include <stddef.h>
 
-#include "libratbag-private.h"
+#include "libghostcat-private.h"
 
 const char *hidpp10_errors[0x100] = {
 	[0x00] = "ERR_SUCCESS",
@@ -70,7 +70,7 @@ const char *hidpp20_errors[0x100] = {
 struct hidpp20_1b04_action_mapping {
 	uint16_t value;
 	const char *name;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 #define BUTTON_ACTION_MAPPING(v_, n_, act_) \
@@ -93,9 +93,9 @@ static const struct hidpp20_1b04_action_mapping hidpp20_1b04_logical_mapping[] =
 	BUTTON_ACTION_MAPPING(86, "Forward"		, BUTTON_ACTION_BUTTON(5)),
 	BUTTON_ACTION_MAPPING(89, "Button 6"		, BUTTON_ACTION_BUTTON(6)),
 	BUTTON_ACTION_MAPPING(90, "Button 7"		, BUTTON_ACTION_BUTTON(7)),
-	BUTTON_ACTION_MAPPING(91, "Left Scroll"		, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_LEFT)),
+	BUTTON_ACTION_MAPPING(91, "Left Scroll"		, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_LEFT)),
 	BUTTON_ACTION_MAPPING(92, "Button 8"		, BUTTON_ACTION_BUTTON(8)),
-	BUTTON_ACTION_MAPPING(93, "Right Scroll"	, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT)),
+	BUTTON_ACTION_MAPPING(93, "Right Scroll"	, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT)),
 	BUTTON_ACTION_MAPPING(94, "Button 9"		, BUTTON_ACTION_BUTTON(9)),
 	BUTTON_ACTION_MAPPING(95, "Button 10"		, BUTTON_ACTION_BUTTON(10)),
 	BUTTON_ACTION_MAPPING(96, "Button 11"		, BUTTON_ACTION_BUTTON(11)),
@@ -114,7 +114,7 @@ static const struct hidpp20_1b04_action_mapping hidpp20_1b04_logical_mapping[] =
 	BUTTON_ACTION_MAPPING(109, "Button 24"		, BUTTON_ACTION_BUTTON(24)),
 	BUTTON_ACTION_MAPPING(184, "Second Left"	, BUTTON_ACTION_BUTTON(1)),
 	BUTTON_ACTION_MAPPING(195, "AppSwitchGesture"	, BUTTON_ACTION_NONE),
-	BUTTON_ACTION_MAPPING(196, "SmartShift"		, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RATCHET_MODE_SWITCH)),
+	BUTTON_ACTION_MAPPING(196, "SmartShift"		, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RATCHET_MODE_SWITCH)),
 	BUTTON_ACTION_MAPPING(315, "LedToggle"		, BUTTON_ACTION_NONE),
 };
 
@@ -166,7 +166,7 @@ static const struct hidpp20_8070_location_mapping hidpp20_8070_location_mapping[
 	LED_LOC_MAPPING(2, "Side LED"),
 };
 
-const struct ratbag_button_action *
+const struct ghostcat_button_action *
 hidpp20_1b04_get_logical_mapping(uint16_t value)
 {
 	const struct hidpp20_1b04_action_mapping *map;
@@ -180,12 +180,12 @@ hidpp20_1b04_get_logical_mapping(uint16_t value)
 }
 
 uint16_t
-hidpp20_1b04_get_logical_control_id(const struct ratbag_button_action *action)
+hidpp20_1b04_get_logical_control_id(const struct ghostcat_button_action *action)
 {
 	const struct hidpp20_1b04_action_mapping *mapping;
 
 	ARRAY_FOR_EACH(hidpp20_1b04_logical_mapping, mapping) {
-		if (ratbag_button_action_match(&mapping->action, action))
+		if (ghostcat_button_action_match(&mapping->action, action))
 			return mapping->value;
 	}
 

@@ -3,8 +3,8 @@
 #include <linux/input.h>
 #include <stdint.h>
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
 
 #define ASUS_QUIRK_DOUBLE_DPI 1 << 0
 #define ASUS_QUIRK_STRIX_PROFILE 1 << 1
@@ -149,42 +149,42 @@ union asus_led_data {
 /* button define */
 struct asus_button {
 	uint8_t asus_code;  /* used for button action */
-	enum ratbag_button_action_type type;
+	enum ghostcat_button_action_type type;
 	uint8_t button;  /* mouse button number, optional */
-	enum ratbag_button_action_special special;  /* special action, optional */
+	enum ghostcat_button_action_special special;  /* special action, optional */
 };
 
 /* ASUS code, button type, button number, special button action */
 static const struct asus_button ASUS_BUTTON_MAPPING[] = {
-	{ 0xf0, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 1, 0 },  /* left */
-	{ 0xf1, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 2, 0 },  /* right (button 3 in xev) */
-	{ 0xf2, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 3, 0 },  /* middle (button 2 in xev) */
-	{ 0xe8, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP },
-	{ 0xe9, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN },
-	{ 0xe6, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP },
-	{ 0xe4, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 4, 0 },  /* backward, left side */
-	{ 0xe5, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 5, 0 },  /* forward, left side */
-	{ 0xe1, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 4, 0 },  /* backward, right side */
-	{ 0xe2, RATBAG_BUTTON_ACTION_TYPE_BUTTON, 5, 0 },  /* forward, right side */
-	{ 0xe7, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE },  /* DPI target */
-	{ 0xea, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button A */
-	{ 0xeb, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button B */
-	{ 0xec, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button C */
-	{ 0xed, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button D */
-	{ 0xee, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button E */
-	{ 0xef, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button F */
-	{ 0xd0, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick up */
-	{ 0xd1, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick down */
-	{ 0xd2, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick forward */
-	{ 0xd3, RATBAG_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick backward */
-	{ 0xd7, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN },  /* joystick axis -Y */
-	{ 0xd8, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP },  /* joystick axis +Y */
-	{ 0xda, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT },  /* joystick axis -X */
-	{ 0xdb, RATBAG_BUTTON_ACTION_TYPE_SPECIAL, 0, RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_LEFT },  /* joystick axis +X */
+	{ 0xf0, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 1, 0 },  /* left */
+	{ 0xf1, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 2, 0 },  /* right (button 3 in xev) */
+	{ 0xf2, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 3, 0 },  /* middle (button 2 in xev) */
+	{ 0xe8, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP },
+	{ 0xe9, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN },
+	{ 0xe6, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP },
+	{ 0xe4, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 4, 0 },  /* backward, left side */
+	{ 0xe5, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 5, 0 },  /* forward, left side */
+	{ 0xe1, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 4, 0 },  /* backward, right side */
+	{ 0xe2, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, 5, 0 },  /* forward, right side */
+	{ 0xe7, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE },  /* DPI target */
+	{ 0xea, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button A */
+	{ 0xeb, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button B */
+	{ 0xec, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button C */
+	{ 0xed, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button D */
+	{ 0xee, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button E */
+	{ 0xef, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* side button F */
+	{ 0xd0, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick up */
+	{ 0xd1, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick down */
+	{ 0xd2, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick forward */
+	{ 0xd3, GHOSTCAT_BUTTON_ACTION_TYPE_NONE, 0, 0 },  /* joystick backward */
+	{ 0xd7, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN },  /* joystick axis -Y */
+	{ 0xd8, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP },  /* joystick axis +Y */
+	{ 0xda, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT },  /* joystick axis -X */
+	{ 0xdb, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, 0, GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_LEFT },  /* joystick axis +X */
 };
 
 const struct asus_button *
-asus_find_button_by_action(struct ratbag_button_action action, bool is_joystick);
+asus_find_button_by_action(struct ghostcat_button_action action, bool is_joystick);
 
 const struct asus_button *
 asus_find_button_by_code(uint8_t asus_code);
@@ -206,67 +206,67 @@ asus_get_linux_key_code(uint8_t asus_code);
 /* initializers of ratbag data */
 
 void
-asus_setup_profile(struct ratbag_device *device, struct ratbag_profile *profile);
+asus_setup_profile(struct ghostcat_device *device, struct ghostcat_profile *profile);
 
 void
-asus_setup_button(struct ratbag_device *device, struct ratbag_button *button);
+asus_setup_button(struct ghostcat_device *device, struct ghostcat_button *button);
 
 void
-asus_setup_resolution(struct ratbag_device *device, struct ratbag_resolution *resolution);
+asus_setup_resolution(struct ghostcat_device *device, struct ghostcat_resolution *resolution);
 
 void
-asus_setup_led(struct ratbag_device *device, struct ratbag_led *led);
+asus_setup_led(struct ghostcat_device *device, struct ghostcat_led *led);
 
 /* generic i/o */
 
 int
-asus_query(struct ratbag_device *device, union asus_request *request, union asus_response *response);
+asus_query(struct ghostcat_device *device, union asus_request *request, union asus_response *response);
 
 /* commit */
 
 int
-asus_save_profile(struct ratbag_device *device);
+asus_save_profile(struct ghostcat_device *device);
 
 /* profiles */
 
 int
-asus_get_profile_data(struct ratbag_device *device, struct asus_profile_data *data);
+asus_get_profile_data(struct ghostcat_device *device, struct asus_profile_data *data);
 
 int
-asus_set_profile(struct ratbag_device *device, unsigned int index);
+asus_set_profile(struct ghostcat_device *device, unsigned int index);
 
 /* button bindings */
 
 int
-asus_get_binding_data(struct ratbag_device *device, union asus_binding_data *data, unsigned int group);
+asus_get_binding_data(struct ghostcat_device *device, union asus_binding_data *data, unsigned int group);
 
 int
-asus_set_button_action(struct ratbag_device *device, uint8_t asus_code_src,
+asus_set_button_action(struct ghostcat_device *device, uint8_t asus_code_src,
 		       uint8_t asus_code_dst, uint8_t asus_type);
 
 /* resolution settings */
 
 int
-asus_get_resolution_data(struct ratbag_device *device, union asus_resolution_data *data, bool sep_xy_dpi);
+asus_get_resolution_data(struct ghostcat_device *device, union asus_resolution_data *data, bool sep_xy_dpi);
 
 int
-asus_set_dpi(struct ratbag_device *device, unsigned int index, unsigned int dpi);
+asus_set_dpi(struct ghostcat_device *device, unsigned int index, unsigned int dpi);
 
 int
-asus_set_polling_rate(struct ratbag_device *device, unsigned int hz);
+asus_set_polling_rate(struct ghostcat_device *device, unsigned int hz);
 
 int
-asus_set_button_response(struct ratbag_device *device, unsigned int ms);
+asus_set_button_response(struct ghostcat_device *device, unsigned int ms);
 
 int
-asus_set_angle_snapping(struct ratbag_device *device, bool is_enabled);
+asus_set_angle_snapping(struct ghostcat_device *device, bool is_enabled);
 
 /* LED settings */
 
 int
-asus_get_led_data(struct ratbag_device *device, union asus_led_data *data, unsigned int led);
+asus_get_led_data(struct ghostcat_device *device, union asus_led_data *data, unsigned int led);
 
 int
-asus_set_led(struct ratbag_device *device,
+asus_set_led(struct ghostcat_device *device,
 		uint8_t index, uint8_t mode, uint8_t brightness,
-		struct ratbag_color color);
+		struct ghostcat_color color);

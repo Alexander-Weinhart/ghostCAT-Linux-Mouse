@@ -16,15 +16,15 @@ Interfaces:
 Changing settings on a device is a three-step process:
 
 #. Change the various properties to the desired value
-#. Invoke :func:`org.freedesktop.ratbag1.Device.Commit() <Commit>`
+#. Invoke :func:`org.freedesktop.ghostcat1.Device.Commit() <Commit>`
 #. Optional: if an error occurred writing the new data to the device,
-   a :func:`org.freedesktop.ratbag1.Resync <Resync>` signal is emitted on the device and
+   a :func:`org.freedesktop.ghostcat1.Resync <Resync>` signal is emitted on the device and
    all properties are updated accordingly.
 
 The time it takes to write settings to a device varies greatly, any caller
-must be prepared to receive a :func:`org.freedesktop.ratbag1.Device.Resync
+must be prepared to receive a :func:`org.freedesktop.ghostcat1.Device.Resync
 <Resync>` signal several seconds after
-:func:`org.freedesktop.ratbag1.Device.Commit() <Commit>`.
+:func:`org.freedesktop.ghostcat1.Device.Commit() <Commit>`.
 
 Notes on the DBus API
 ---------------------
@@ -74,10 +74,10 @@ unless otherwise specified.
 
 .. _manager:
 
-org.freedesktop.ratbag1.Manager
+org.freedesktop.ghostcat1.Manager
 -------------------------------
 
-The **org.freedesktop.ratbag1.Manager** interface is the entry point to
+The **org.freedesktop.ghostcat1.Manager** interface is the entry point to
 interact with ratbagd.
 
 .. attribute:: APIVersion
@@ -103,10 +103,10 @@ interact with ratbagd.
 
 .. _device:
 
-org.freedesktop.ratbag1.Device
+org.freedesktop.ghostcat1.Device
 -------------------------------
 
-The **org.freedesktop.ratbag1.Device** interface describes a single device
+The **org.freedesktop.ghostcat1.Device** interface describes a single device
 known to ratbagd.
 
 .. attribute:: Model
@@ -197,7 +197,7 @@ known to ratbagd.
 
 .. _profile:
 
-org.freedesktop.ratbag1.Profile
+org.freedesktop.ghostcat1.Profile
 -------------------------------
 
 .. attribute:: Index
@@ -332,7 +332,7 @@ org.freedesktop.ratbag1.Profile
 
 .. _resolution:
 
-org.freedesktop.ratbag1.Resolution
+org.freedesktop.ghostcat1.Resolution
 ----------------------------------
 
 .. attribute:: Index
@@ -444,7 +444,7 @@ org.freedesktop.ratbag1.Resolution
 
 .. _button:
 
-org.freedesktop.ratbag1.Button
+org.freedesktop.ghostcat1.Button
 ------------------------------
 
 .. attribute:: Index
@@ -514,7 +514,7 @@ org.freedesktop.ratbag1.Button
 
 .. _led:
 
-org.freedesktop.ratbag1.Led
+org.freedesktop.ghostcat1.Led
 ---------------------------
 
 .. attribute:: Index

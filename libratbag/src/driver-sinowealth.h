@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "libratbag-util.h"
+#include "libghostcat-util.h"
 
 #define SINOWEALTH_FW_VERSION_LEN 4
 

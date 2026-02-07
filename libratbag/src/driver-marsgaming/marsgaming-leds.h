@@ -1,6 +1,6 @@
 #pragma once
 #include "stdint.h"
-#include "libratbag.h"
+#include "libghostcat.h"
 
 #define MARSGAMING_LED_BREATHING_OFF 0
 
@@ -23,5 +23,5 @@ struct marsgaming_led {
 
 _Static_assert(sizeof(struct marsgaming_led) == 5, "Marsgaming led is not 5 bytes");
 
-struct ratbag_color
+struct ghostcat_color
 marsgaming_led_color_to_ratbag(struct marsgaming_led_color color);

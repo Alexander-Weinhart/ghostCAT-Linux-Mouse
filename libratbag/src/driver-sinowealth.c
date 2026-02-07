@@ -23,9 +23,9 @@
 
 #include "driver-sinowealth.h"
 
-#include "libratbag-data.h"
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
+#include "libghostcat-data.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
 #include "shared-macro.h"
 
 enum sinowealth_report_id {
@@ -442,7 +442,7 @@ struct sinowealth_macro_event {
 
 		/* HID keyboard usage.
 		 *
-		 * @ref ratbag_hidraw_get_keyboard_usage_from_keycode.
+		 * @ref ghostcat_hidraw_get_keyboard_usage_from_keycode.
 		 */
 		uint8_t key;
 	};
@@ -490,7 +490,7 @@ struct sinowealth_data {
 
 struct sinowealth_button_mapping {
 	struct sinowealth_button_data data;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 static const struct sinowealth_button_mapping sinowealth_button_map[] = {
@@ -503,8 +503,8 @@ static const struct sinowealth_button_mapping sinowealth_button_map[] = {
 	/* None of the other bits do anything. */
 
 	/* First data byte is a 0-255 range. */
-	{ { SINOWEALTH_BUTTON_TYPE_WHEEL, { { 0x1 } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP) },
-	{ { SINOWEALTH_BUTTON_TYPE_WHEEL, { { 0xff } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN) },
+	{ { SINOWEALTH_BUTTON_TYPE_WHEEL, { { 0x1 } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP) },
+	{ { SINOWEALTH_BUTTON_TYPE_WHEEL, { { 0xff } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN) },
 	/* None of the other bits do anything. */
 
 	{ { SINOWEALTH_BUTTON_TYPE_MULTIMEDIA_KEY, { { 0x01 } } }, BUTTON_ACTION_KEY(KEY_NEXTSONG) },
@@ -533,16 +533,16 @@ static const struct sinowealth_button_mapping sinowealth_button_map[] = {
 	{ { SINOWEALTH_BUTTON_TYPE_MULTIMEDIA_KEY, { { 0x0, 0x0, 0x40 } } }, BUTTON_ACTION_KEY(KEY_BOOKMARKS) }, /* Hidden. */
 	{ { SINOWEALTH_BUTTON_TYPE_MULTIMEDIA_KEY, { { 0x0, 0x0, 0x80 } } }, BUTTON_ACTION_KEY(KEY_UNKNOWN) },	 /* Hidden. */
 
-	{ { SINOWEALTH_BUTTON_TYPE_SWITCH_DPI, { { 0x0 } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
-	{ { SINOWEALTH_BUTTON_TYPE_SWITCH_DPI, { { 0x1 } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
-	{ { SINOWEALTH_BUTTON_TYPE_SWITCH_DPI, { { 0x2 } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
+	{ { SINOWEALTH_BUTTON_TYPE_SWITCH_DPI, { { 0x0 } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
+	{ { SINOWEALTH_BUTTON_TYPE_SWITCH_DPI, { { 0x1 } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
+	{ { SINOWEALTH_BUTTON_TYPE_SWITCH_DPI, { { 0x2 } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
 	/* None of the other bits do anything. */
 
 	{ { SINOWEALTH_BUTTON_TYPE_SPECIAL, { { 0x1 } } }, BUTTON_ACTION_NONE },
 	/* Cycle report rates up. */
-	{ { SINOWEALTH_BUTTON_TYPE_SPECIAL, { { 0x4 } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_UNKNOWN) },
+	{ { SINOWEALTH_BUTTON_TYPE_SPECIAL, { { 0x4 } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_UNKNOWN) },
 	/* Cycle LED modes. */
-	{ { SINOWEALTH_BUTTON_TYPE_SPECIAL, { { 0x7 } } }, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_UNKNOWN) },
+	{ { SINOWEALTH_BUTTON_TYPE_SPECIAL, { { 0x7 } } }, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_UNKNOWN) },
 
 	/* This must defined after `SPECIAL` type so that correct raw data
 	 * for action type `NONE` is used. */
@@ -556,7 +556,7 @@ static const struct sinowealth_button_mapping sinowealth_button_map[] = {
 static const struct sinowealth_button_mapping sinowealth_button_map_profiles[] = {
 	{
 		{ SINOWEALTH_BUTTON_TYPE_SPECIAL, { { 0x6 } } },
-		BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP),
+		BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP),
 	},
 };
 
@@ -589,13 +589,13 @@ sinowealth_button_data_is_equal(const struct sinowealth_button_data *lhs, const 
  */
 static int
 sinowealth_button_action_to_raw(const struct sinowealth_data *drv_data,
-				const struct ratbag_button_action *action,
+				const struct ghostcat_button_action *action,
 				struct sinowealth_button_data *data)
 {
 	const struct sinowealth_button_mapping *mapping = NULL;
 
 	ARRAY_FOR_EACH(sinowealth_button_map, mapping) {
-		if (!ratbag_button_action_match(&mapping->action, action)) {
+		if (!ghostcat_button_action_match(&mapping->action, action)) {
 			continue;
 		}
 
@@ -605,7 +605,7 @@ sinowealth_button_action_to_raw(const struct sinowealth_data *drv_data,
 
 	if (drv_data->profile_count > 1) {
 		ARRAY_FOR_EACH(sinowealth_button_map_profiles, mapping) {
-			if (!ratbag_button_action_match(&mapping->action, action)) {
+			if (!ghostcat_button_action_match(&mapping->action, action)) {
 				continue;
 			}
 
@@ -624,8 +624,8 @@ sinowealth_button_action_to_raw(const struct sinowealth_data *drv_data,
  * better made programmatically. See @ref sinowealth_update_profile_from_buttons.
  *
  * @return Button action or NULL if such action is not in the map. */
-static const struct ratbag_button_action *
-sinowealth_raw_to_button_action(const struct ratbag_device *device,
+static const struct ghostcat_button_action *
+sinowealth_raw_to_button_action(const struct ghostcat_device *device,
 				const struct sinowealth_button_data *data)
 {
 	const struct sinowealth_button_mapping *mapping = NULL;
@@ -707,7 +707,7 @@ sinowealth_get_max_dpi_for_sensor(enum sinowealth_sensor sensor)
  * @ref sinowealth_dpis.
  */
 static unsigned int
-sinowealth_raw_to_dpi(struct ratbag_device *device, unsigned int raw)
+sinowealth_raw_to_dpi(struct ghostcat_device *device, unsigned int raw)
 {
 	struct sinowealth_data *drv_data = device->drv_data;
 	enum sinowealth_sensor sensor = drv_data->configs[0].sensor_type;
@@ -725,7 +725,7 @@ sinowealth_raw_to_dpi(struct ratbag_device *device, unsigned int raw)
  * @ref sinowealth_dpis.
  */
 static uint8_t
-sinowealth_dpi_to_raw(struct ratbag_device *device, unsigned int dpi)
+sinowealth_dpi_to_raw(struct ghostcat_device *device, unsigned int dpi)
 {
 	struct sinowealth_data *drv_data = device->drv_data;
 	enum sinowealth_sensor sensor = drv_data->configs[0].sensor_type;
@@ -743,12 +743,12 @@ sinowealth_dpi_to_raw(struct ratbag_device *device, unsigned int dpi)
 /* Convert internal mouse color `raw` to color.
  * If LED type defined in the device data is incorrect, RBG color order is used.
  */
-static struct ratbag_color
-sinowealth_raw_to_color(struct ratbag_device *device, struct sinowealth_color raw_color)
+static struct ghostcat_color
+sinowealth_raw_to_color(struct ghostcat_device *device, struct sinowealth_color raw_color)
 {
 	struct sinowealth_data *drv_data = device->drv_data;
 
-	struct ratbag_color color;
+	struct ghostcat_color color;
 
 	switch (drv_data->led_type) {
 	/* Fall-back to RBG as it seems more often used. */
@@ -772,7 +772,7 @@ sinowealth_raw_to_color(struct ratbag_device *device, struct sinowealth_color ra
  * If LED type defined in the device data is incorrect, RBG color order is used.
  */
 static struct sinowealth_color
-sinowealth_color_to_raw(struct ratbag_device *device, struct ratbag_color color)
+sinowealth_color_to_raw(struct ghostcat_device *device, struct ghostcat_color color)
 {
 	struct sinowealth_data *drv_data = device->drv_data;
 
@@ -847,7 +847,7 @@ sinowealth_duration_to_rgb_mode(unsigned int duration)
 
 /* Fill LED `led` with values from mode `mode`. */
 static void
-sinowealth_set_led_from_rgb_mode(struct ratbag_led *led, struct sinowealth_rgb_mode mode)
+sinowealth_set_led_from_rgb_mode(struct ghostcat_led *led, struct sinowealth_rgb_mode mode)
 {
 	led->brightness = sinowealth_rgb_mode_to_brightness(mode);
 	led->ms = sinowealth_rgb_mode_to_duration(mode);
@@ -855,7 +855,7 @@ sinowealth_set_led_from_rgb_mode(struct ratbag_led *led, struct sinowealth_rgb_m
 
 /* Convert data in LED `led` to RGB mode. */
 static struct sinowealth_rgb_mode
-sinowealth_led_to_rgb_mode(const struct ratbag_led *led)
+sinowealth_led_to_rgb_mode(const struct ghostcat_led *led)
 {
 	struct sinowealth_rgb_mode mode;
 	mode.brightness = sinowealth_brightness_to_rgb_mode((uint8_t)led->brightness);
@@ -916,7 +916,7 @@ sinowealth_get_config_command(size_t profile_index)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_query_read(struct ratbag_device *device, uint8_t buffer[], unsigned int buffer_length)
+sinowealth_query_read(struct ghostcat_device *device, uint8_t buffer[], unsigned int buffer_length)
 {
 	int rc = 0;
 
@@ -935,7 +935,7 @@ sinowealth_query_read(struct ratbag_device *device, uint8_t buffer[], unsigned i
 	 * We also do this to reduce the amount of arguments in the function.
 	 */
 
-	rc = ratbag_hidraw_set_feature_report(device, report_id, buffer, buffer_length);
+	rc = ghostcat_hidraw_set_feature_report(device, report_id, buffer, buffer_length);
 	if (rc < 0) {
 		return rc;
 	}
@@ -944,7 +944,7 @@ sinowealth_query_read(struct ratbag_device *device, uint8_t buffer[], unsigned i
 		return -EIO;
 	}
 
-	rc = ratbag_hidraw_get_feature_report(device, report_id, buffer, buffer_length);
+	rc = ghostcat_hidraw_get_feature_report(device, report_id, buffer, buffer_length);
 	if (rc < 0) {
 		return rc;
 	}
@@ -967,14 +967,14 @@ sinowealth_query_read(struct ratbag_device *device, uint8_t buffer[], unsigned i
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_query_write(struct ratbag_device *device, uint8_t buffer[], unsigned int buffer_length)
+sinowealth_query_write(struct ghostcat_device *device, uint8_t buffer[], unsigned int buffer_length)
 {
 	int rc = 0;
 
 	/* Buffer's first byte is always the report ID. */
 	const uint8_t report_id = buffer[0];
 
-	rc = ratbag_hidraw_set_feature_report(device, report_id, buffer, buffer_length);
+	rc = ghostcat_hidraw_set_feature_report(device, report_id, buffer, buffer_length);
 	if (rc < 0) {
 		log_error(device->ratbag, "Error while writing data: %s (%d)\n", strerror(-rc), rc);
 		return rc;
@@ -989,7 +989,7 @@ sinowealth_query_write(struct ratbag_device *device, uint8_t buffer[], unsigned 
 
 /* @return Active profile index or a negative errno. */
 static int
-sinowealth_get_active_profile(struct ratbag_device *device)
+sinowealth_get_active_profile(struct ghostcat_device *device)
 {
 	int rc = 0;
 
@@ -1011,7 +1011,7 @@ sinowealth_get_active_profile(struct ratbag_device *device)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_set_active_profile(struct ratbag_device *device, unsigned int index)
+sinowealth_set_active_profile(struct ghostcat_device *device, unsigned int index)
 {
 	if (index >= SINOWEALTH_NUM_PROFILES_MAX) {
 		log_error(device->ratbag, "Profile index %u is out of range\n", index);
@@ -1038,7 +1038,7 @@ sinowealth_set_active_profile(struct ratbag_device *device, unsigned int index)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_get_fw_version(struct ratbag_device *device, char out[4])
+sinowealth_get_fw_version(struct ghostcat_device *device, char out[4])
 {
 	int rc = 0;
 
@@ -1057,7 +1057,7 @@ sinowealth_get_fw_version(struct ratbag_device *device, char out[4])
 
 /* @return Time in milliseconds or a negative errno. */
 static int
-sinowealth_get_debounce_time(struct ratbag_device *device)
+sinowealth_get_debounce_time(struct ghostcat_device *device)
 {
 	int rc = 0;
 
@@ -1077,7 +1077,7 @@ sinowealth_get_debounce_time(struct ratbag_device *device)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_set_debounce_time(struct ratbag_device *device, int debounce_time_ms)
+sinowealth_set_debounce_time(struct ghostcat_device *device, int debounce_time_ms)
 {
 	if (debounce_time_ms < SINOWEALTH_DEBOUNCE_MIN || debounce_time_ms > SINOWEALTH_DEBOUNCE_MAX) {
 		log_error(device->ratbag, "Debounce time %d is out of range %d-%d\n",
@@ -1109,7 +1109,7 @@ sinowealth_set_debounce_time(struct ratbag_device *device, int debounce_time_ms)
  * config report doesn't work. This does not work on Glorious Model O.
  */
 static int
-sinowealth_print_long_lod_and_anglesnapping(struct ratbag_device *device)
+sinowealth_print_long_lod_and_anglesnapping(struct ghostcat_device *device)
 {
 	int rc = 0;
 
@@ -1155,7 +1155,7 @@ sinowealth_print_long_lod_and_anglesnapping(struct ratbag_device *device)
  * @return Count of bytes transferred or a negative errno.
  */
 static int
-sinowealth_query_read_config(struct ratbag_device *device, uint8_t config_cmd, uint8_t *buffer, unsigned int reply_len_min, unsigned int reply_len_max)
+sinowealth_query_read_config(struct ghostcat_device *device, uint8_t config_cmd, uint8_t *buffer, unsigned int reply_len_min, unsigned int reply_len_max)
 {
 	int rc = 0;
 
@@ -1171,7 +1171,7 @@ sinowealth_query_read_config(struct ratbag_device *device, uint8_t config_cmd, u
 	{
 		const unsigned char config_report_id = drv_data->is_long ? SINOWEALTH_REPORT_ID_CONFIG_LONG : SINOWEALTH_REPORT_ID_CONFIG;
 
-		rc = ratbag_hidraw_get_feature_report(device, config_report_id, buffer, SINOWEALTH_CONFIG_REPORT_SIZE);
+		rc = ghostcat_hidraw_get_feature_report(device, config_report_id, buffer, SINOWEALTH_CONFIG_REPORT_SIZE);
 		if (rc < 0) {
 			log_error(device->ratbag,
 				  "Could not get feature report while reading device configuration data: %s (%d)\n",
@@ -1193,7 +1193,7 @@ sinowealth_query_read_config(struct ratbag_device *device, uint8_t config_cmd, u
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_read_raw_button_configs(struct ratbag_device *device)
+sinowealth_read_raw_button_configs(struct ghostcat_device *device)
 {
 	int rc;
 
@@ -1219,7 +1219,7 @@ sinowealth_read_raw_button_configs(struct ratbag_device *device)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_read_raw_configs(struct ratbag_device *device)
+sinowealth_read_raw_configs(struct ghostcat_device *device)
 {
 	int rc = 0;
 
@@ -1250,20 +1250,20 @@ sinowealth_read_raw_configs(struct ratbag_device *device)
 
 /* Update profile with values from raw configuration data. */
 static void
-sinowealth_update_profile_from_config(struct ratbag_profile *profile)
+sinowealth_update_profile_from_config(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct sinowealth_data *drv_data = device->drv_data;
 	struct sinowealth_config_report *config = &drv_data->configs[profile->index];
-	struct ratbag_led *led = NULL;
-	struct ratbag_resolution *resolution = NULL;
+	struct ghostcat_led *led = NULL;
+	struct ghostcat_resolution *resolution = NULL;
 
 	/* Report rate */
 	const unsigned int hz = sinowealth_raw_to_report_rate(config->report_rate);
 	profile->hz = hz;
 
 	unsigned int enabled_dpi_count = 0;
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		if (config->config_flags & SINOWEALTH_XY_INDEPENDENT) {
 			resolution->dpi_x = sinowealth_raw_to_dpi(device, config->dpis.independent[resolution->index].x);
 			resolution->dpi_y = sinowealth_raw_to_dpi(device, config->dpis.independent[resolution->index].y);
@@ -1289,13 +1289,13 @@ sinowealth_update_profile_from_config(struct ratbag_profile *profile)
 
 	/* Body lighting */
 	if (drv_data->led_count > 0) {
-		led = ratbag_profile_get_led(profile, 0);
+		led = ghostcat_profile_get_led(profile, 0);
 		switch (config->rgb_effect) {
 		case RGB_OFF:
-			led->mode = RATBAG_LED_OFF;
+			led->mode = GHOSTCAT_LED_OFF;
 			break;
 		case RGB_SINGLE:
-			led->mode = RATBAG_LED_ON;
+			led->mode = GHOSTCAT_LED_ON;
 			led->color = sinowealth_raw_to_color(device, config->single_color);
 			led->brightness = sinowealth_rgb_mode_to_brightness(config->single_mode);
 			break;
@@ -1305,13 +1305,13 @@ sinowealth_update_profile_from_config(struct ratbag_profile *profile)
 			 */
 			if (config->breathing7_colorcount < 1) {
 				log_error(device->ratbag, "LED mode is multi-colored breathing, but there are no colors configured\n");
-				led->mode = RATBAG_LED_OFF;
+				led->mode = GHOSTCAT_LED_OFF;
 				break;
 			}
 			if (config->breathing7_colorcount > 1) {
 				log_debug(device->ratbag, "LED mode is multi-colored breathing, but we can only use one color. Using the first one...\n");
 			}
-			led->mode = RATBAG_LED_BREATHING;
+			led->mode = GHOSTCAT_LED_BREATHING;
 			led->color = sinowealth_raw_to_color(device, config->breathing7_colors[0]);
 			sinowealth_set_led_from_rgb_mode(led, config->breathing7_mode);
 			break;
@@ -1322,11 +1322,11 @@ sinowealth_update_profile_from_config(struct ratbag_profile *profile)
 		case RGB_TAIL:
 		case RGB_RAVE:
 		case RGB_WAVE:
-			led->mode = RATBAG_LED_CYCLE;
+			led->mode = GHOSTCAT_LED_CYCLE;
 			sinowealth_set_led_from_rgb_mode(led, config->glorious_mode);
 			break;
 		case RGB_BREATHING1:
-			led->mode = RATBAG_LED_BREATHING;
+			led->mode = GHOSTCAT_LED_BREATHING;
 			led->color = sinowealth_raw_to_color(device, config->breathing1_color);
 			sinowealth_set_led_from_rgb_mode(led, config->breathing1_mode);
 			break;
@@ -1335,24 +1335,24 @@ sinowealth_update_profile_from_config(struct ratbag_profile *profile)
 			log_error(device->ratbag, "Got unknown RGB effect: %d\n", config->rgb_effect);
 			break;
 		}
-		ratbag_led_unref(led);
+		ghostcat_led_unref(led);
 	}
 }
 
 static void
-sinowealth_update_profile_from_buttons(struct ratbag_profile *profile)
+sinowealth_update_profile_from_buttons(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct sinowealth_data *drv_data = device->drv_data;
 	struct sinowealth_button_report *buf = &drv_data->buttons[profile->index];
-	struct ratbag_button *button = NULL;
+	struct ghostcat_button *button = NULL;
 	struct sinowealth_button_data button_data;
 	int rc = 0;
 
-	ratbag_profile_for_each_button(profile, button) {
+	ghostcat_profile_for_each_button(profile, button) {
 		button_data = buf->buttons[button->index];
 
-		const struct ratbag_button_action *action = sinowealth_raw_to_button_action(device,
+		const struct ghostcat_button_action *action = sinowealth_raw_to_button_action(device,
 											    &button_data);
 		/* Match was found in the map, continue. */
 		if (action != NULL) {
@@ -1362,7 +1362,7 @@ sinowealth_update_profile_from_buttons(struct ratbag_profile *profile)
 		}
 
 		/* Explicitly fall back to type `UNKNOWN` as `NONE` is the default. */
-		button->action.type = RATBAG_BUTTON_ACTION_TYPE_UNKNOWN;
+		button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_UNKNOWN;
 
 		switch (button_data.type) {
 		case SINOWEALTH_BUTTON_TYPE_KEY: {
@@ -1376,12 +1376,12 @@ sinowealth_update_profile_from_buttons(struct ratbag_profile *profile)
 			if (button_data.key.modifiers & SINOWEALTH_BUTTON_KEY_MODIFIER_LEFTMETA)
 				modifiers |= MODIFIER_LEFTMETA;
 
-			const unsigned int key = ratbag_hidraw_get_keycode_from_keyboard_usage(device, button_data.key.key);
+			const unsigned int key = ghostcat_hidraw_get_keycode_from_keyboard_usage(device, button_data.key.key);
 
-			rc = ratbag_button_macro_new_from_keycode(button, key, modifiers);
+			rc = ghostcat_button_macro_new_from_keycode(button, key, modifiers);
 			if (rc < 0) {
 				log_error(device->ratbag, "Error while reading button %d\n", button->index);
-				button->action.type = RATBAG_BUTTON_ACTION_TYPE_UNKNOWN;
+				button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_UNKNOWN;
 			}
 			break;
 		}
@@ -1416,10 +1416,10 @@ sinowealth_update_profile_from_buttons(struct ratbag_profile *profile)
 
 			const int key = 0; /* Dummy. */
 			const int modifiers = 0; /* Dummy. */
-			rc = ratbag_button_macro_new_from_keycode(button, key, modifiers);
+			rc = ghostcat_button_macro_new_from_keycode(button, key, modifiers);
 			if (rc < 0) {
 				log_error(device->ratbag, "Could not make a dummy macro\n");
-				button->action.type = RATBAG_BUTTON_ACTION_TYPE_UNKNOWN;
+				button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_UNKNOWN;
 			}
 
 			break;
@@ -1433,11 +1433,11 @@ sinowealth_update_profile_from_buttons(struct ratbag_profile *profile)
 
 /* @return 0 on success or a negative errno. */
 static int
-sinowealth_button_set_key_action(const struct ratbag_button *button, struct sinowealth_button_data *button_data)
+sinowealth_button_set_key_action(const struct ghostcat_button *button, struct sinowealth_button_data *button_data)
 {
-	struct ratbag_device *device = button->profile->device;
+	struct ghostcat_device *device = button->profile->device;
 
-	if (button->action.type != RATBAG_BUTTON_ACTION_TYPE_KEY) {
+	if (button->action.type != GHOSTCAT_BUTTON_ACTION_TYPE_KEY) {
 		log_bug_libratbag(device->ratbag, "button %u: action must be a key",
 				  button->index);
 		return -EINVAL;
@@ -1449,7 +1449,7 @@ sinowealth_button_set_key_action(const struct ratbag_button *button, struct sino
 	// sinowealth_button_key_action_from_simple_macro().
 	const unsigned int modifiers = 0;
 
-	const uint8_t raw_key = ratbag_hidraw_get_keyboard_usage_from_keycode(device, key);
+	const uint8_t raw_key = ghostcat_hidraw_get_keyboard_usage_from_keycode(device, key);
 	if (raw_key == 0) {
 		log_error(device->ratbag, "button %u: couldn't assign unsupported key %#x\n",
 			  button->index, key);
@@ -1470,24 +1470,24 @@ sinowealth_button_set_key_action(const struct ratbag_button *button, struct sino
  */
 static int
 sinowealth_button_key_action_from_simple_macro(
-	const struct ratbag_button *button,
+	const struct ghostcat_button *button,
 	uint8_t *key_out, uint8_t *modifiers_out)
 {
 	int rc;
-	unsigned int libratbag_key = 0;
-	unsigned int libratbag_modifiers = 0;
+	unsigned int libghostcat_key = 0;
+	unsigned int libghostcat_modifiers = 0;
 
-	rc = ratbag_action_keycode_from_macro(&button->action, &libratbag_key, &libratbag_modifiers);
+	rc = ghostcat_action_keycode_from_macro(&button->action, &libghostcat_key, &libghostcat_modifiers);
 	if (rc < 0)
 		return rc;
 
-	rc = sinowealth_modifiers_to_raw(libratbag_modifiers);
+	rc = sinowealth_modifiers_to_raw(libghostcat_modifiers);
 	if (rc < 0)
 		return rc;
 	*modifiers_out = (uint8_t)rc;
 
-	*key_out = ratbag_hidraw_get_keyboard_usage_from_keycode(
-		button->profile->device, libratbag_key);
+	*key_out = ghostcat_hidraw_get_keyboard_usage_from_keycode(
+		button->profile->device, libghostcat_key);
 	if (*key_out == 0)
 		return -EINVAL;
 
@@ -1495,19 +1495,19 @@ sinowealth_button_key_action_from_simple_macro(
 }
 
 static int
-sinowealth_update_buttons_from_profile(struct ratbag_profile *profile)
+sinowealth_update_buttons_from_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct sinowealth_data *drv_data = device->drv_data;
 	struct sinowealth_button_report *buttons = &drv_data->buttons[profile->index];
-	struct ratbag_button *button = NULL;
+	struct ghostcat_button *button = NULL;
 	int rc = 0;
 
-	ratbag_profile_for_each_button(profile, button) {
+	ghostcat_profile_for_each_button(profile, button) {
 		if (!button->dirty)
 			continue;
 
-		struct ratbag_button_action *action = &button->action;
+		struct ghostcat_button_action *action = &button->action;
 		struct sinowealth_button_data *button_data = &buttons->buttons[button->index];
 
 		rc = sinowealth_button_action_to_raw(drv_data, action, button_data);
@@ -1517,13 +1517,13 @@ sinowealth_update_buttons_from_profile(struct ratbag_profile *profile)
 		}
 
 		switch (action->type) {
-		case RATBAG_BUTTON_ACTION_TYPE_KEY:
+		case GHOSTCAT_BUTTON_ACTION_TYPE_KEY:
 			rc = sinowealth_button_set_key_action(button, button_data);
 			if (rc < 0) {
 				return rc;
 			}
 			break;
-		case RATBAG_BUTTON_ACTION_TYPE_MACRO: {
+		case GHOSTCAT_BUTTON_ACTION_TYPE_MACRO: {
 			/* Make the button activate a macro.
 			 * The macro itself will be written later by sinowealth_write_macros(),
 			 * unless we choose to write it as a simple key instead.
@@ -1567,13 +1567,13 @@ sinowealth_update_buttons_from_profile(struct ratbag_profile *profile)
  */
 static int
 sinowealth_update_macro_events_from_action(
-	struct ratbag_device *device,
-	struct ratbag_button *button,
+	struct ghostcat_device *device,
+	struct ghostcat_button *button,
 	struct sinowealth_macro_report *mouse_macro)
 {
-	struct ratbag_button_action *action = &button->action;
+	struct ghostcat_button_action *action = &button->action;
 
-	if (button->action.type != RATBAG_BUTTON_ACTION_TYPE_MACRO) {
+	if (button->action.type != GHOSTCAT_BUTTON_ACTION_TYPE_MACRO) {
 		log_bug_libratbag(device->ratbag, "Button's action is not a macro");
 		return -EINVAL;
 	}
@@ -1583,24 +1583,24 @@ sinowealth_update_macro_events_from_action(
 
 	uint8_t raw_event_count = 0;
 	for (unsigned int i = 0; i < MAX_MACRO_EVENTS; ++i) {
-		struct ratbag_macro_event *ratbag_macro_event = &action->macro->events[i];
+		struct ghostcat_macro_event *ghostcat_macro_event = &action->macro->events[i];
 		if (raw_event_count >= SINOWEALTH_MACRO_LENGTH_MAX) {
 			log_error(device->ratbag, "There are more events in the macro than the mouse supports\n");
 
 			/* Update the type of this event so that libratbag ignores
 			 * unused events.
 			 */
-			ratbag_macro_event->type = RATBAG_MACRO_EVENT_NONE;
+			ghostcat_macro_event->type = GHOSTCAT_MACRO_EVENT_NONE;
 			break;
 		};
 
-		if (ratbag_macro_event->type == RATBAG_MACRO_EVENT_NONE)
+		if (ghostcat_macro_event->type == GHOSTCAT_MACRO_EVENT_NONE)
 			break;
 
-		switch (ratbag_macro_event->type) {
-		case RATBAG_MACRO_EVENT_KEY_PRESSED:
-		case RATBAG_MACRO_EVENT_KEY_RELEASED: {
-			const unsigned int key = ratbag_macro_event->event.key;
+		switch (ghostcat_macro_event->type) {
+		case GHOSTCAT_MACRO_EVENT_KEY_PRESSED:
+		case GHOSTCAT_MACRO_EVENT_KEY_RELEASED: {
+			const unsigned int key = ghostcat_macro_event->event.key;
 
 			struct sinowealth_macro_event *mouse_macro_event = &mouse_macro->events[raw_event_count];
 
@@ -1616,20 +1616,20 @@ sinowealth_update_macro_events_from_action(
 				const uint8_t raw_button = 1 << (key - BTN_LEFT);
 
 				mouse_macro_event->command =
-					ratbag_macro_event->type == RATBAG_MACRO_EVENT_KEY_PRESSED ?
+					ghostcat_macro_event->type == GHOSTCAT_MACRO_EVENT_KEY_PRESSED ?
 						SINOWEALTH_MACRO_COMMAND_BUTTON_PRESS :
 						SINOWEALTH_MACRO_COMMAND_BUTTON_RELEASE;
 
 				mouse_macro_event->button = raw_button;
 			} else {
-				const uint8_t raw_key = ratbag_hidraw_get_keyboard_usage_from_keycode(device, key);
+				const uint8_t raw_key = ghostcat_hidraw_get_keyboard_usage_from_keycode(device, key);
 				if (raw_key == 0) {
 					log_error(device->ratbag, "Macro for button %u: could not set unsupported key %#x\n", button->index, key);
 					continue;
 				}
 
 				mouse_macro_event->command =
-					ratbag_macro_event->type == RATBAG_MACRO_EVENT_KEY_PRESSED ?
+					ghostcat_macro_event->type == GHOSTCAT_MACRO_EVENT_KEY_PRESSED ?
 						SINOWEALTH_MACRO_COMMAND_KEY_PRESS :
 						SINOWEALTH_MACRO_COMMAND_KEY_RELEASE;
 
@@ -1639,8 +1639,8 @@ sinowealth_update_macro_events_from_action(
 			++raw_event_count;
 			break;
 		}
-		case RATBAG_MACRO_EVENT_WAIT: {
-			unsigned int *timeout = &ratbag_macro_event->event.timeout;
+		case GHOSTCAT_MACRO_EVENT_WAIT: {
+			unsigned int *timeout = &ghostcat_macro_event->event.timeout;
 			/* Delay is a part of every macro event in SinoWealth mice,
 			 * that is, it does not occupy a separate event slot and is
 			 * set to the previous event.
@@ -1659,10 +1659,10 @@ sinowealth_update_macro_events_from_action(
 			prev_mouse_macro_event->delay = (uint8_t)*timeout;
 			break;
 		}
-		case RATBAG_MACRO_EVENT_NONE:
+		case GHOSTCAT_MACRO_EVENT_NONE:
 			/* Handled separately above. */
 			break;
-		case RATBAG_MACRO_EVENT_INVALID:
+		case GHOSTCAT_MACRO_EVENT_INVALID:
 			abort();
 			break;
 		}
@@ -1678,11 +1678,11 @@ sinowealth_update_macro_events_from_action(
  * @return Supported device data for the device or `NULL`.
  */
 static const struct sinowealth_device_data *
-sinowealth_find_device_data(struct ratbag_device *device, const char *fw_version)
+sinowealth_find_device_data(struct ghostcat_device *device, const char *fw_version)
 {
-	const struct ratbag_device_data *data = device->data;
+	const struct ghostcat_device_data *data = device->data;
 
-	const struct list *supported_devices = ratbag_device_data_sinowealth_get_supported_devices(data);
+	const struct list *supported_devices = ghostcat_device_data_sinowealth_get_supported_devices(data);
 
 	struct sinowealth_device_data *device_data = NULL;
 	list_for_each(device_data, supported_devices, link) {
@@ -1705,13 +1705,13 @@ sinowealth_find_device_data(struct ratbag_device *device, const char *fw_version
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_init_profile(struct ratbag_device *device)
+sinowealth_init_profile(struct ghostcat_device *device)
 {
 	int rc = 0;
-	struct ratbag_button *button = NULL;
-	struct ratbag_led *led = NULL;
-	struct ratbag_profile *profile = NULL;
-	struct ratbag_resolution *resolution = NULL;
+	struct ghostcat_button *button = NULL;
+	struct ghostcat_led *led = NULL;
+	struct ghostcat_profile *profile = NULL;
+	struct ghostcat_resolution *resolution = NULL;
 
 	struct sinowealth_data *drv_data = device->drv_data;
 	/* We only use this to detect whether RGB effects are available and
@@ -1724,7 +1724,7 @@ sinowealth_init_profile(struct ratbag_device *device)
 	rc = sinowealth_get_fw_version(device, fw_version);
 	if (rc)
 		return rc;
-	ratbag_device_set_firmware_version(device, fw_version);
+	ghostcat_device_set_firmware_version(device, fw_version);
 	log_debug(device->ratbag, "Firmware version: %s\n", fw_version);
 
 	const struct sinowealth_device_data *device_data = sinowealth_find_device_data(device, fw_version);
@@ -1811,9 +1811,9 @@ sinowealth_init_profile(struct ratbag_device *device)
 	/* Number of DPIs = all DPIs from min to max (inclusive). */
 	const unsigned int num_dpis = (sinowealth_get_max_dpi_for_sensor(config->sensor_type) - SINOWEALTH_DPI_MIN) / SINOWEALTH_DPI_STEP + 1;
 
-	ratbag_device_init_profiles(device, drv_data->profile_count, SINOWEALTH_NUM_DPIS, drv_data->button_count, drv_data->led_count);
+	ghostcat_device_init_profiles(device, drv_data->profile_count, SINOWEALTH_NUM_DPIS, drv_data->button_count, drv_data->led_count);
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		profile->is_active = profile->index == active_profile_index;
 	}
 
@@ -1832,9 +1832,9 @@ sinowealth_init_profile(struct ratbag_device *device)
 		 * around this, we only enable debounce time setting on the
 		 * first profile.
 		 */
-		ratbag_device_for_each_profile(device, profile) {
+		ghostcat_device_for_each_profile(device, profile) {
 			profile->debounce = rc;
-			ratbag_profile_set_debounce_list(
+			ghostcat_profile_set_debounce_list(
 				profile, SINOWEALTH_DEBOUNCE_TIMES, ARRAY_LENGTH(SINOWEALTH_DEBOUNCE_TIMES));
 			break;
 		}
@@ -1848,33 +1848,33 @@ sinowealth_init_profile(struct ratbag_device *device)
 		dpis[i] = SINOWEALTH_DPI_MIN + i * SINOWEALTH_DPI_STEP;
 	}
 
-	ratbag_device_for_each_profile(device, profile) {
-		ratbag_profile_for_each_button(profile, button) {
-			ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_NONE);
-			ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-			ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-			ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_KEY);
-			ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_MACRO);
+	ghostcat_device_for_each_profile(device, profile) {
+		ghostcat_profile_for_each_button(profile, button) {
+			ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_NONE);
+			ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+			ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+			ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_KEY);
+			ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_MACRO);
 		}
 
-		ratbag_profile_for_each_resolution(profile, resolution) {
-			ratbag_resolution_set_dpi_list(resolution, dpis, num_dpis);
-			ratbag_resolution_set_cap(resolution, RATBAG_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
-			ratbag_resolution_set_cap(resolution, RATBAG_RESOLUTION_CAP_DISABLE);
+		ghostcat_profile_for_each_resolution(profile, resolution) {
+			ghostcat_resolution_set_dpi_list(resolution, dpis, num_dpis);
+			ghostcat_resolution_set_cap(resolution, GHOSTCAT_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
+			ghostcat_resolution_set_cap(resolution, GHOSTCAT_RESOLUTION_CAP_DISABLE);
 		}
 
 		/* Set up available report rates. */
-		ratbag_profile_set_report_rate_list(profile, SINOWEALTH_REPORT_RATES, ARRAY_LENGTH(SINOWEALTH_REPORT_RATES));
+		ghostcat_profile_set_report_rate_list(profile, SINOWEALTH_REPORT_RATES, ARRAY_LENGTH(SINOWEALTH_REPORT_RATES));
 
 		/* Set up LED capabilities */
 		if (drv_data->led_count > 0) {
-			led = ratbag_profile_get_led(profile, 0);
-			led->colordepth = RATBAG_LED_COLORDEPTH_RGB_888;
-			ratbag_led_set_mode_capability(led, RATBAG_LED_OFF);
-			ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
-			ratbag_led_set_mode_capability(led, RATBAG_LED_CYCLE);
-			ratbag_led_set_mode_capability(led, RATBAG_LED_BREATHING);
-			ratbag_led_unref(led);
+			led = ghostcat_profile_get_led(profile, 0);
+			led->colordepth = GHOSTCAT_LED_COLORDEPTH_RGB_888;
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_OFF);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_CYCLE);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_BREATHING);
+			ghostcat_led_unref(led);
 		}
 	}
 
@@ -1882,16 +1882,16 @@ sinowealth_init_profile(struct ratbag_device *device)
 }
 
 static int
-sinowealth_test_hidraw(struct ratbag_device *device)
+sinowealth_test_hidraw(struct ghostcat_device *device)
 {
 	int rc = 0;
 
 	/* Only the keyboard interface has this report */
-	rc = ratbag_hidraw_has_report(device, SINOWEALTH_REPORT_ID_CONFIG);
+	rc = ghostcat_hidraw_has_report(device, SINOWEALTH_REPORT_ID_CONFIG);
 	if (rc)
 		return rc;
 
-	rc = ratbag_hidraw_has_report(device, SINOWEALTH_REPORT_ID_CONFIG_LONG);
+	rc = ghostcat_hidraw_has_report(device, SINOWEALTH_REPORT_ID_CONFIG_LONG);
 	if (rc) {
 		struct sinowealth_data *drv_data = device->drv_data;
 		drv_data->is_long = true;
@@ -1907,7 +1907,7 @@ sinowealth_test_hidraw(struct ratbag_device *device)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_write_buttons(struct ratbag_device *device)
+sinowealth_write_buttons(struct ghostcat_device *device)
 {
 	int rc = 0;
 
@@ -1937,7 +1937,7 @@ sinowealth_write_buttons(struct ratbag_device *device)
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_write_configs(struct ratbag_device *device)
+sinowealth_write_configs(struct ghostcat_device *device)
 {
 	int rc = 0;
 
@@ -1963,11 +1963,11 @@ sinowealth_write_configs(struct ratbag_device *device)
 }
 
 static int
-sinowealth_write_macros(struct ratbag_device *device)
+sinowealth_write_macros(struct ghostcat_device *device)
 {
 	int rc = 0;
-	struct ratbag_button *button = NULL;
-	struct ratbag_profile *profile = NULL;
+	struct ghostcat_button *button = NULL;
+	struct ghostcat_profile *profile = NULL;
 
 	struct sinowealth_data *drv_data = device->drv_data;
 
@@ -1979,17 +1979,17 @@ sinowealth_write_macros(struct ratbag_device *device)
 	macro.command_id = SINOWEALTH_CMD_MACRO;
 	macro.unknown1 = 0x2;
 
-	ratbag_device_for_each_profile(device, profile) {
-		ratbag_profile_for_each_button(profile, button) {
+	ghostcat_device_for_each_profile(device, profile) {
+		ghostcat_profile_for_each_button(profile, button) {
 			if (!button->dirty)
 				continue;
 
-			struct ratbag_button_action *action = &button->action;
+			struct ghostcat_button_action *action = &button->action;
 
 			/* Ignore non macro actions and simple macros.
 			 * They were already handled by sinowealth_update_profile_from_buttons().
 			 */
-			if (action->type != RATBAG_BUTTON_ACTION_TYPE_MACRO ||
+			if (action->type != GHOSTCAT_BUTTON_ACTION_TYPE_MACRO ||
 			    drv_data->button_key_action_instead_of_macro[button->index])
 				continue;
 
@@ -2013,16 +2013,16 @@ sinowealth_write_macros(struct ratbag_device *device)
 }
 
 static int
-sinowealth_probe(struct ratbag_device *device)
+sinowealth_probe(struct ghostcat_device *device)
 {
 	int rc = 0;
-	struct ratbag_profile *profile = NULL;
+	struct ghostcat_profile *profile = NULL;
 	struct sinowealth_data *drv_data = NULL;
 
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 
-	rc = ratbag_find_hidraw(device, sinowealth_test_hidraw);
+	rc = ghostcat_find_hidraw(device, sinowealth_test_hidraw);
 	if (rc)
 		goto err;
 
@@ -2032,7 +2032,7 @@ sinowealth_probe(struct ratbag_device *device)
 		goto err;
 	}
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		sinowealth_update_profile_from_config(profile);
 		sinowealth_update_profile_from_buttons(profile);
 	}
@@ -2044,7 +2044,7 @@ sinowealth_probe(struct ratbag_device *device)
 
 err:
 	free(drv_data);
-	ratbag_set_drv_data(device, NULL);
+	ghostcat_set_drv_data(device, NULL);
 	return rc;
 }
 
@@ -2054,13 +2054,13 @@ err:
  * @return 0 on success or a negative errno.
  */
 static int
-sinowealth_update_config_from_profile(struct ratbag_profile *profile)
+sinowealth_update_config_from_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct sinowealth_data *drv_data = device->drv_data;
 	struct sinowealth_config_report *config = &drv_data->configs[profile->index];
-	struct ratbag_led *led = NULL;
-	struct ratbag_resolution *resolution = NULL;
+	struct ghostcat_led *led = NULL;
+	struct ghostcat_resolution *resolution = NULL;
 	uint8_t dpi_enabled = 0;
 
 	/* Update report rate. */
@@ -2073,7 +2073,7 @@ sinowealth_update_config_from_profile(struct ratbag_profile *profile)
 
 	/* Check if any resolution requires independent XY DPIs */
 	config->config_flags &= ~SINOWEALTH_XY_INDEPENDENT;
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		if (resolution->dpi_x != resolution->dpi_y && resolution->dpi_x && resolution->dpi_y) {
 			config->config_flags |= SINOWEALTH_XY_INDEPENDENT;
 			break;
@@ -2081,7 +2081,7 @@ sinowealth_update_config_from_profile(struct ratbag_profile *profile)
 	}
 
 	config->dpi_count = 0;
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		if (resolution->is_disabled)
 			continue;
 
@@ -2107,27 +2107,27 @@ sinowealth_update_config_from_profile(struct ratbag_profile *profile)
 
 	/* Body lighting */
 	if (drv_data->led_count > 0) {
-		led = ratbag_profile_get_led(profile, 0);
+		led = ghostcat_profile_get_led(profile, 0);
 		switch (led->mode) {
-		case RATBAG_LED_OFF:
+		case GHOSTCAT_LED_OFF:
 			config->rgb_effect = RGB_OFF;
 			break;
-		case RATBAG_LED_ON:
+		case GHOSTCAT_LED_ON:
 			config->rgb_effect = RGB_SINGLE;
 			config->single_color = sinowealth_color_to_raw(device, led->color);
 			break;
-		case RATBAG_LED_CYCLE:
+		case GHOSTCAT_LED_CYCLE:
 			config->rgb_effect = RGB_GLORIOUS;
 			config->glorious_mode = sinowealth_led_to_rgb_mode(led);
 			break;
-		case RATBAG_LED_BREATHING:
+		case GHOSTCAT_LED_BREATHING:
 			config->rgb_effect = RGB_BREATHING7;
 			config->breathing7_mode = sinowealth_led_to_rgb_mode(led);
 			config->breathing7_colorcount = 1;
 			config->breathing7_colors[0] = sinowealth_color_to_raw(device, led->color);
 			break;
 		}
-		ratbag_led_unref(led);
+		ghostcat_led_unref(led);
 	} else {
 		/* Reset the value in case we accidentally managed to set it when we were not supposed to. */
 		config->rgb_effect = RGB_NOT_SUPPORTED;
@@ -2137,12 +2137,12 @@ sinowealth_update_config_from_profile(struct ratbag_profile *profile)
 }
 
 static int
-sinowealth_commit(struct ratbag_device *device)
+sinowealth_commit(struct ghostcat_device *device)
 {
 	int rc = 0;
-	struct ratbag_profile *profile = NULL;
+	struct ghostcat_profile *profile = NULL;
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		rc = sinowealth_update_config_from_profile(profile);
 		if (rc)
 			return rc;
@@ -2163,7 +2163,7 @@ sinowealth_commit(struct ratbag_device *device)
 	if (rc)
 		return rc;
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		if (profile->debounce_dirty) {
 			rc = sinowealth_set_debounce_time(device, profile->debounce);
 			if (rc)
@@ -2176,13 +2176,13 @@ sinowealth_commit(struct ratbag_device *device)
 }
 
 static void
-sinowealth_remove(struct ratbag_device *device)
+sinowealth_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
-struct ratbag_driver sinowealth_driver = {
+struct ghostcat_driver sinowealth_driver = {
 	.name = "Sinowealth",
 	.id = "sinowealth",
 	.probe = sinowealth_probe,

@@ -86,20 +86,20 @@ class RatbagDeviceType(IntEnum):
 
 
 class RatbagdIncompatibleError(Exception):
-    """ratbagd is incompatible with this client"""
+    """ghostcatd is incompatible with this client"""
 
-    def __init__(self, ratbagd_version, required_version):
+    def __init__(self, ghostcatd_version, required_version):
         super().__init__()
-        self.ratbagd_version = ratbagd_version
+        self.ghostcatd_version = ghostcatd_version
         self.required_version = required_version
-        self.message = f"ratbagd API version is {ratbagd_version} but we require {required_version}"
+        self.message = f"ghostcatd API version is {ghostcatd_version} but we require {required_version}"
 
     def __str__(self):
         return self.message
 
 
 class RatbagdUnavailableError(Exception):
-    """Signals DBus is unavailable or the ratbagd daemon is not available."""
+    """Signals DBus is unavailable or the ghostcatd daemon is not available."""
 
 
 class RatbagdDBusTimeoutError(Exception):
@@ -152,7 +152,7 @@ class _RatbagdDBus(GObject.GObject):
             except GLib.Error as e:
                 raise RatbagdUnavailableError(e.message) from e
 
-        ratbag1 = "org.freedesktop.ratbag1"
+        ratbag1 = "org.freedesktop.ghostcat1"
         if os.environ.get("RATBAG_TEST"):
             ratbag1 = "org.freedesktop.ratbag_devel1"
 
@@ -261,8 +261,8 @@ class _RatbagdDBus(GObject.GObject):
 
 
 class Ratbagd(_RatbagdDBus):
-    """The ratbagd top-level object. Provides a list of devices available
-    through ratbagd; actual interaction with the devices is via the
+    """The ghostcatd top-level object. Provides a list of devices available
+    through ghostcatd; actual interaction with the devices is via the
     RatbagdDevice, RatbagdProfile, RatbagdResolution and RatbagdButton objects.
 
     Throws RatbagdUnavailableError when the DBus service is not available.
@@ -318,7 +318,7 @@ class Ratbagd(_RatbagdDBus):
 
     @GObject.Property
     def devices(self):
-        """A list of RatbagdDevice objects supported by ratbagd."""
+        """A list of RatbagdDevice objects supported by ghostcatd."""
         return self._devices
 
     def __getitem__(self, id):
@@ -336,7 +336,7 @@ class Ratbagd(_RatbagdDBus):
 
 
 class RatbagdDevice(_RatbagdDBus):
-    """Represents a ratbagd device."""
+    """Represents a ghostcatd device."""
 
     __gsignals__ = {
         "active-profile-changed": (
@@ -419,8 +419,8 @@ class RatbagdDevice(_RatbagdDBus):
     def commit(self):
         """Commits all changes made to the device.
 
-        This is implemented asynchronously inside ratbagd. Hence, we just call
-        this method and always succeed.  Any failure is handled inside ratbagd
+        This is implemented asynchronously inside ghostcatd. Hence, we just call
+        this method and always succeed.  Any failure is handled inside ghostcatd
         by emitting the Resync signal, which automatically resynchronizes the
         device. No further interaction is required by the client.
         """
@@ -428,7 +428,7 @@ class RatbagdDevice(_RatbagdDBus):
 
 
 class RatbagdProfile(_RatbagdDBus):
-    """Represents a ratbagd profile."""
+    """Represents a ghostcatd profile."""
 
     CAP_WRITABLE_NAME = 100
     CAP_SET_DEFAULT = 101
@@ -670,7 +670,7 @@ class RatbagdProfile(_RatbagdDBus):
 
 
 class RatbagdResolution(_RatbagdDBus):
-    """Represents a ratbagd resolution."""
+    """Represents a ghostcatd resolution."""
 
     CAP_SEPARATE_XY_RESOLUTION = 1
     CAP_DISABLE = 2
@@ -813,7 +813,7 @@ class RatbagdResolution(_RatbagdDBus):
 
 
 class RatbagdButton(_RatbagdDBus):
-    """Represents a ratbagd button."""
+    """Represents a ghostcatd button."""
 
     class ActionType(IntEnum):
         NONE = 0
@@ -1060,13 +1060,13 @@ class RatbagdMacro(GObject.Object):
         @param macro The macro in libratbag format, as
                      [(RatbagdButton.Macro.*, value)].
         """
-        ratbagd_macro = RatbagdMacro()
+        ghostcatd_macro = RatbagdMacro()
 
         # Do not emit notify::keys for every key that we add.
-        with ratbagd_macro.freeze_notify():
+        with ghostcatd_macro.freeze_notify():
             for type, value in macro:
-                ratbagd_macro.append(type, value)
-        return ratbagd_macro
+                ghostcatd_macro.append(type, value)
+        return ghostcatd_macro
 
     def accept(self):
         """Applies the currently cached macro."""
@@ -1088,7 +1088,7 @@ class RatbagdMacro(GObject.Object):
 
 
 class RatbagdLed(_RatbagdDBus):
-    """Represents a ratbagd led."""
+    """Represents a ghostcatd led."""
 
     class Mode(IntEnum):
         OFF = 0

@@ -81,7 +81,7 @@ struct marsgaming_profile_drv_data {
 };
 
 inline static struct marsgaming_profile_drv_data *
-marsgaming_profile_get_drv_data(struct ratbag_profile *profile)
+marsgaming_profile_get_drv_data(struct ghostcat_profile *profile)
 {
 	return (struct marsgaming_profile_drv_data *)profile->drv_data;
 }

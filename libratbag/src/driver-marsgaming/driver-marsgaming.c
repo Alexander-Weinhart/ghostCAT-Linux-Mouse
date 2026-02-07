@@ -1,17 +1,17 @@
-#include "libratbag-private.h"
+#include "libghostcat-private.h"
 #include "marsgaming-probe.h"
 #include "marsgaming-commit.h"
 
 static void
-marsgaming_remove(struct ratbag_device *device)
+marsgaming_remove(struct ghostcat_device *device)
 {
-	struct ratbag_profile *profile;
-	ratbag_device_for_each_profile(device, profile) {
+	struct ghostcat_profile *profile;
+	ghostcat_device_for_each_profile(device, profile) {
 		free(profile->drv_data);
 	}
 }
 
-struct ratbag_driver marsgaming_driver = {
+struct ghostcat_driver marsgaming_driver = {
 	.name = "Mars Gaming",
 	.id = "marsgaming",
 	.probe = marsgaming_probe,

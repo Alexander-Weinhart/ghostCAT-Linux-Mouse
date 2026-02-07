@@ -22,10 +22,10 @@
  */
 
 #include "config.h"
-#include "libratbag-enums.h"
-#include "libratbag-hidraw.h"
-#include "libratbag-private.h"
-#include "libratbag-util.h"
+#include "libghostcat-enums.h"
+#include "libghostcat-hidraw.h"
+#include "libghostcat-private.h"
+#include "libghostcat-util.h"
 #include "shared-macro.h"
 #include <stdint.h>
 #include <string.h>
@@ -85,27 +85,27 @@ sinowealthnubwo_aesthetic_report {
 static uint8_t AESTHETIC_CMD[] = {0x06, 0xbb, 0xaa, 0x2a, 0x00, 0x0a, 0x00};
 
 static int
-sinowealthnubwo_test_hidraw(struct ratbag_device *device)
+sinowealthnubwo_test_hidraw(struct ghostcat_device *device)
 {
 	return
-		ratbag_hidraw_has_report(device, SINOWEALTHNUBWO_AESTHETIC_CMD_REPORTID)
-		&& ratbag_hidraw_has_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID)
-		&& ratbag_hidraw_has_report(device, SINOWEALTHNUBWO_GET_FIRMWARE_CMD_REPORTID);
+		ghostcat_hidraw_has_report(device, SINOWEALTHNUBWO_AESTHETIC_CMD_REPORTID)
+		&& ghostcat_hidraw_has_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID)
+		&& ghostcat_hidraw_has_report(device, SINOWEALTHNUBWO_GET_FIRMWARE_CMD_REPORTID);
 }
 
 static int
-sinowealth_get_firmware_string(struct ratbag_device *device, char **output)
+sinowealth_get_firmware_string(struct ghostcat_device *device, char **output)
 {
 	uint8_t buff[SINOWEALTHNUBWO_GET_FIRMWARE_MSGSIZE + 1] = {0}; //Purposefully overalloacate to prevent buffer overrun
 	int size;
 
-	size = ratbag_hidraw_set_feature_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID, PREFIRMWARE_QUERY_MSG, ARRAY_LENGTH(PREFIRMWARE_QUERY_MSG));
+	size = ghostcat_hidraw_set_feature_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID, PREFIRMWARE_QUERY_MSG, ARRAY_LENGTH(PREFIRMWARE_QUERY_MSG));
 	if (size < 0) {
 		log_error(device->ratbag, "Error while sending pre-firmware request message: %d\n", size);
 		return size;
 	}
 
-	size = ratbag_hidraw_get_feature_report(device, SINOWEALTHNUBWO_GET_FIRMWARE_CMD_REPORTID, buff, SINOWEALTHNUBWO_GET_FIRMWARE_MSGSIZE);
+	size = ghostcat_hidraw_get_feature_report(device, SINOWEALTHNUBWO_GET_FIRMWARE_CMD_REPORTID, buff, SINOWEALTHNUBWO_GET_FIRMWARE_MSGSIZE);
 	if (size < 0) {
 		return size;
 	}
@@ -119,14 +119,14 @@ sinowealth_get_firmware_string(struct ratbag_device *device, char **output)
 }
 
 static int
-sinowealthnubwo_probe(struct ratbag_device *device)
+sinowealthnubwo_probe(struct ghostcat_device *device)
 {
 	int error;
-	struct ratbag_profile *profile;
-	struct ratbag_resolution *resolution;
-	struct ratbag_led *led;
+	struct ghostcat_profile *profile;
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_led *led;
 
-	error = ratbag_find_hidraw(device, sinowealthnubwo_test_hidraw);
+	error = ghostcat_find_hidraw(device, sinowealthnubwo_test_hidraw);
 	if (error)
 		return error;
 
@@ -137,31 +137,31 @@ sinowealthnubwo_probe(struct ratbag_device *device)
 	log_info(device->ratbag, "Firmware: %s\n", fwstr);
 	free(fwstr);
 
-	ratbag_device_init_profiles(device,
+	ghostcat_device_init_profiles(device,
 			SINOWEALTHNUBWO_NUM_PROFILES,
 			SINOWEALTHNUBWO_NUM_RESOLUTIONS,
 			SINOWEALTHNUBWO_NUM_BUTTONS,
 			SINOWEALTHNUBWO_NUM_LEDS);
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		profile->is_active = true;
 
-		ratbag_profile_set_cap(profile, RATBAG_PROFILE_CAP_WRITE_ONLY);
-		ratbag_profile_set_report_rate_list(profile, REPORT_RATES, ARRAY_LENGTH(REPORT_RATES));
-		ratbag_profile_for_each_resolution(profile, resolution) {
-			ratbag_resolution_set_dpi_list(resolution, DPILIST, ARRAY_LENGTH(DPILIST));
+		ghostcat_profile_set_cap(profile, GHOSTCAT_PROFILE_CAP_WRITE_ONLY);
+		ghostcat_profile_set_report_rate_list(profile, REPORT_RATES, ARRAY_LENGTH(REPORT_RATES));
+		ghostcat_profile_for_each_resolution(profile, resolution) {
+			ghostcat_resolution_set_dpi_list(resolution, DPILIST, ARRAY_LENGTH(DPILIST));
 			resolution->dpi_x = resolution->dpi_y = DPILIST[ARRAY_LENGTH(DPILIST)-1];
 			resolution->is_active = true;
 			resolution->is_default = true;
 		}
-		ratbag_profile_for_each_led(profile, led) {
-			led->mode = RATBAG_LED_OFF;
+		ghostcat_profile_for_each_led(profile, led) {
+			led->mode = GHOSTCAT_LED_OFF;
 			led->color.red = led->color.green = led->color.blue = 0xFF;
-			led->colordepth = RATBAG_LED_COLORDEPTH_RGB_888;
-			ratbag_led_set_mode_capability(led, RATBAG_LED_OFF);
-			ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
-			ratbag_led_set_mode_capability(led, RATBAG_LED_BREATHING);
-			ratbag_led_set_mode_capability(led, RATBAG_LED_CYCLE);
+			led->colordepth = GHOSTCAT_LED_COLORDEPTH_RGB_888;
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_OFF);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_BREATHING);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_CYCLE);
 			//Actually more
 		}
 	}
@@ -188,39 +188,39 @@ encode_report_rate(unsigned int reportrate)
 }
 
 static int
-sinowealthnubwo_set_dpi(struct ratbag_device *device, int dpi)
+sinowealthnubwo_set_dpi(struct ghostcat_device *device, int dpi)
 {
 	uint8_t buf[SINOWEALTHNUBWO_PERF_CMD_MSGSIZE] = {0};
 	memcpy(buf, DPI_CMD, ARRAY_LENGTH(DPI_CMD));
 	buf[ARRAY_LENGTH(DPI_CMD)] = encode_dpi(dpi);
-	int error = ratbag_hidraw_set_feature_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID, buf, SINOWEALTHNUBWO_PERF_CMD_MSGSIZE);
+	int error = ghostcat_hidraw_set_feature_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID, buf, SINOWEALTHNUBWO_PERF_CMD_MSGSIZE);
 	if (error < 0)
 		return error;
 	return 0;
 }
 
 static int
-sinowealthnubwo_set_report_rate(struct ratbag_device *device, int reportrate)
+sinowealthnubwo_set_report_rate(struct ghostcat_device *device, int reportrate)
 {
 	uint8_t buf[SINOWEALTHNUBWO_PERF_CMD_MSGSIZE] = {0};
 	memcpy(buf, REPORT_RATES_CMD, ARRAY_LENGTH(REPORT_RATES_CMD));
 	buf[ARRAY_LENGTH(REPORT_RATES_CMD)] = encode_report_rate(reportrate);
-	int error = ratbag_hidraw_set_feature_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID, buf, SINOWEALTHNUBWO_PERF_CMD_MSGSIZE);
+	int error = ghostcat_hidraw_set_feature_report(device, SINOWEALTHNUBWO_PERF_CMD_REPORTID, buf, SINOWEALTHNUBWO_PERF_CMD_MSGSIZE);
 	if (error < 0)
 		return error;
 	return 0;
 }
 
-static enum sinowealthnubwo_color_mode encode_color(enum ratbag_led_mode mode)
+static enum sinowealthnubwo_color_mode encode_color(enum ghostcat_led_mode mode)
 {
 	switch (mode) {
-	case RATBAG_LED_OFF:
+	case GHOSTCAT_LED_OFF:
 		return SINOWEALTHNUBWO_COLOR_OFF;
-	case RATBAG_LED_ON:
+	case GHOSTCAT_LED_ON:
 		return SINOWEALTHNUBWO_COLOR_ON;
-	case RATBAG_LED_CYCLE:
+	case GHOSTCAT_LED_CYCLE:
 		return SINOWEALTHNUBWO_COLOR_MARQUEE;
-	case RATBAG_LED_BREATHING:
+	case GHOSTCAT_LED_BREATHING:
 		return SINOWEALTHNUBWO_COLOR_BREATHING;
 	default:
 		return SINOWEALTHNUBWO_COLOR_OFF;
@@ -242,7 +242,7 @@ static uint8_t normalize_brightness(int brightness)
 }
 
 static int
-sinowealthnubwo_set_aesthetic(struct ratbag_device *device, struct ratbag_led *led) {
+sinowealthnubwo_set_aesthetic(struct ghostcat_device *device, struct ghostcat_led *led) {
 	struct sinowealthnubwo_aesthetic_report report = {0};
 	report.report_id = SINOWEALTHNUBWO_AESTHETIC_CMD_REPORTID;
 	memcpy(report.cmd, AESTHETIC_CMD, ARRAY_LENGTH(AESTHETIC_CMD));
@@ -253,17 +253,17 @@ sinowealthnubwo_set_aesthetic(struct ratbag_device *device, struct ratbag_led *l
 	report.tempo = normalize_duration(led->ms);
 	report.brightness = normalize_brightness(led->brightness);
 
-	int size = ratbag_hidraw_set_feature_report(device, SINOWEALTHNUBWO_AESTHETIC_CMD_REPORTID, (uint8_t *) &report, sizeof(report));
+	int size = ghostcat_hidraw_set_feature_report(device, SINOWEALTHNUBWO_AESTHETIC_CMD_REPORTID, (uint8_t *) &report, sizeof(report));
 	if (size < 0)
 		return size;
 	return 0;
 }
 
 static int
-sinowealthnubwo_write_profile(struct ratbag_device *device, struct ratbag_profile *profile)
+sinowealthnubwo_write_profile(struct ghostcat_device *device, struct ghostcat_profile *profile)
 {
-	struct ratbag_resolution *resolution;
-	struct ratbag_led *led;
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_led *led;
 	int error;
 
 	log_debug(device->ratbag, "Writing updates\n");
@@ -273,7 +273,7 @@ sinowealthnubwo_write_profile(struct ratbag_device *device, struct ratbag_profil
 	if (error)
 		return error;
 
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		if (!resolution->dirty)
 			continue;
 		log_debug(device->ratbag, "Setting DPI\n");
@@ -282,7 +282,7 @@ sinowealthnubwo_write_profile(struct ratbag_device *device, struct ratbag_profil
 			return error;
 	}
 
-	ratbag_profile_for_each_led(profile, led) {
+	ghostcat_profile_for_each_led(profile, led) {
 		if (!led->dirty)
 			continue;
 		log_debug(device->ratbag, "Setting aesthetic\n");
@@ -294,9 +294,9 @@ sinowealthnubwo_write_profile(struct ratbag_device *device, struct ratbag_profil
 }
 
 static int
-sinowealthnubwo_commit(struct ratbag_device *device)
+sinowealthnubwo_commit(struct ghostcat_device *device)
 {
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	list_for_each(profile, &device->profiles, link) {
 		if (!profile->dirty) continue;
 
@@ -308,12 +308,12 @@ sinowealthnubwo_commit(struct ratbag_device *device)
 }
 
 static void
-sinowealthnubwo_remove(struct ratbag_device *device)
+sinowealthnubwo_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
+	ghostcat_close_hidraw(device);
 }
 
-struct ratbag_driver sinowealth_nubwo_driver = {
+struct ghostcat_driver sinowealth_nubwo_driver = {
 	.name = "Sinowealth Nubwo",
 	.id = "sinowealth_nubwo",
 	.probe = sinowealthnubwo_probe,

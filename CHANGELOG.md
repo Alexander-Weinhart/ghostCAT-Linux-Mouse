@@ -180,7 +180,7 @@ This represents the complete state of modifications before the GhostCAT rebrand.
 These changes are planned for future commits:
 
 ### Rebrand Phase
-- [ ] Complete rename: `ratbag` → `ghostcat`, `ratbagd` → `ghostcatd`, `Piper` → `GhostCAT`
+- [ ] Complete rename: `ratbag` → `ghostcat`, `ratbagd` → `ghostcatd`, `GhostCAT` → `GhostCAT`
 - [ ] D-Bus interface: `org.freedesktop.ratbag1` → `org.freedesktop.ghostcat1`
 - [ ] Python package: `piper` → `ghostcat`
 - [ ] All C function prefixes: `ratbag_` → `ghostcat_`

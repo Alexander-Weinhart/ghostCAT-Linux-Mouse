@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#include "libratbag-private.h"
+#include "libghostcat-private.h"
 
 
 /* reports */
@@ -176,7 +176,7 @@ openinput_report_filter(uint8_t *buf, size_t len)
 }
 
 static int
-openinput_send_report(struct ratbag_device *device, struct oi_report_t *report)
+openinput_send_report(struct ghostcat_device *device, struct oi_report_t *report)
 {
 	int ret;
 	uint8_t buffer[OI_REPORT_MAX_SIZE];
@@ -184,14 +184,14 @@ openinput_send_report(struct ratbag_device *device, struct oi_report_t *report)
 
 	memcpy(buffer, report, size);
 
-	ret = ratbag_hidraw_output_report(device, buffer, size);
+	ret = ghostcat_hidraw_output_report(device, buffer, size);
 	if (ret < 0) {
 		log_error(device->ratbag, "openinput: failed to send data to device (%s)\n",
 			  strerror(-ret));
 		return ret;
 	}
 
-	ret = ratbag_hidraw_read_input_report(device, buffer, OI_REPORT_MAX_SIZE, openinput_report_filter);
+	ret = ghostcat_hidraw_read_input_report(device, buffer, OI_REPORT_MAX_SIZE, openinput_report_filter);
 	if (ret < 0) {
 		log_error(device->ratbag, "openinput: failed to read data from device (%s)\n",
 			  strerror(-ret));
@@ -210,10 +210,10 @@ openinput_send_report(struct ratbag_device *device, struct oi_report_t *report)
 }
 
 static int
-openinput_info_version(struct ratbag_device *device)
+openinput_info_version(struct ghostcat_device *device)
 {
 	int ret;
-	struct openinput_drv_data *drv_data = ratbag_get_drv_data(device);
+	struct openinput_drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct oi_report_t report = {
 		.id = OI_REPORT_SHORT,
 		.function_page = OI_PAGE_INFO,
@@ -239,7 +239,7 @@ openinput_info_version(struct ratbag_device *device)
 #define OI_FUNCTION_FW_INFO_DEVICE_NAME		0x02
 
 static int
-openinput_info_fw_info(struct ratbag_device *device,
+openinput_info_fw_info(struct ghostcat_device *device,
 				  uint8_t field_id,
 				  unsigned char *description,
 				  size_t description_size)
@@ -263,7 +263,7 @@ openinput_info_fw_info(struct ratbag_device *device,
 
 
 static int
-openinput_info_supported_function_pages(struct ratbag_device *device,
+openinput_info_supported_function_pages(struct ghostcat_device *device,
 						   uint8_t start_index,
 						   uint8_t *pages_count,
 						   uint8_t *pages_left,
@@ -290,7 +290,7 @@ openinput_info_supported_function_pages(struct ratbag_device *device,
 }
 
 static int
-openinput_info_supported_functions(struct ratbag_device *device,
+openinput_info_supported_functions(struct ghostcat_device *device,
 					      uint8_t function_page,
 					      uint8_t start_index,
 					      uint8_t *functions_count,
@@ -318,9 +318,9 @@ openinput_info_supported_functions(struct ratbag_device *device,
 }
 
 static int
-openinput_read_supported_functions(struct ratbag_device *device, uint8_t page)
+openinput_read_supported_functions(struct ghostcat_device *device, uint8_t page)
 {
-	struct ratbag *ratbag = device->ratbag;
+	struct ghostcat *ratbag = device->ratbag;
 	int ret;
 	uint8_t i, total, read = 0, count = 0, left = 0;
 	uint8_t buffer[OI_REPORT_DATA_MAX_SIZE];
@@ -369,9 +369,9 @@ openinput_read_supported_functions(struct ratbag_device *device, uint8_t page)
 }
 
 static int
-openinput_read_supported_function_pages(struct ratbag_device *device)
+openinput_read_supported_function_pages(struct ghostcat_device *device)
 {
-	struct ratbag *ratbag = device->ratbag;
+	struct ghostcat *ratbag = device->ratbag;
 	int ret;
 	uint8_t i, total, read = 0, count = 0, left = 0;
 	uint8_t buffer[OI_REPORT_DATA_MAX_SIZE];
@@ -425,27 +425,27 @@ openinput_read_supported_function_pages(struct ratbag_device *device)
 }
 
 static void
-openinput_read_profile(struct ratbag_profile *profile)
+openinput_read_profile(struct ghostcat_profile *profile)
 {
-	ratbag_profile_set_report_rate_list(profile, report_rates, sizeof(*report_rates));
+	ghostcat_profile_set_report_rate_list(profile, report_rates, sizeof(*report_rates));
 	profile->is_active = true;
 }
 
 static int
-openinput_test_hidraw(struct ratbag_device *device)
+openinput_test_hidraw(struct ghostcat_device *device)
 {
-	return ratbag_hidraw_has_report(device, OI_REPORT_SHORT);
+	return ghostcat_hidraw_has_report(device, OI_REPORT_SHORT);
 }
 
 static int
-openinput_probe(struct ratbag_device *device)
+openinput_probe(struct ghostcat_device *device)
 {
 	int ret;
 	struct openinput_drv_data *drv_data;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	unsigned char str[OI_REPORT_DATA_MAX_SIZE];
 
-	ret = ratbag_find_hidraw(device, openinput_test_hidraw);
+	ret = ghostcat_find_hidraw(device, openinput_test_hidraw);
 	if (ret)
 		return ret;
 
@@ -453,7 +453,7 @@ openinput_probe(struct ratbag_device *device)
 
 	drv_data->num_profiles = 1;
 
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 
 	openinput_info_version(device);
 
@@ -476,26 +476,26 @@ openinput_probe(struct ratbag_device *device)
 	if (ret)
 		return ret;
 
-	ratbag_device_init_profiles(device,
+	ghostcat_device_init_profiles(device,
 				    drv_data->num_profiles,
 				    drv_data->num_resolutions,
 				    drv_data->num_buttons,
 				    drv_data->num_leds);
 
-	ratbag_device_for_each_profile(device, profile)
+	ghostcat_device_for_each_profile(device, profile)
 		openinput_read_profile(profile);
 
 	return 0;
 }
 
 static void
-openinput_remove(struct ratbag_device *device)
+openinput_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
-struct ratbag_driver openinput_driver = {
+struct ghostcat_driver openinput_driver = {
 	.name = "openinput",
 	.id = "openinput",
 	.probe = openinput_probe,

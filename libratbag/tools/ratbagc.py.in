@@ -109,7 +109,7 @@ class RatbagDeviceType(IntEnum):
 
 
 class RatbagdUnavailableError(Exception):
-    """Signals DBus is unavailable or the ratbagd daemon is not available."""
+    """Signals DBus is unavailable or the ghostcatd daemon is not available."""
 
 
 class RatbagError(Exception):
@@ -147,7 +147,7 @@ EXCEPTION_TABLE = {
 
 
 class Ratbagd:
-    """The ratbagd top-level object. Provides a list of devices available
+    """The ghostcatd top-level object. Provides a list of devices available
     through libratbag; actual interaction with the devices is via the
     RatbagdDevice, RatbagdProfile, RatbagdResolution and RatbagdButton objects.
 
@@ -208,7 +208,7 @@ class Ratbagd:
 
     @property
     def devices(self):
-        """A list of RatbagdDevice objects supported by ratbagd."""
+        """A list of RatbagdDevice objects supported by ghostcatd."""
         if not self._devices_initialized:
             self._init_devices()
         return self._devices.values()
@@ -251,7 +251,7 @@ def get_capabilities(type, object):
 
 
 class RatbagdDevice(metaclass=MetaRatbag):
-    """Represents a ratbagd device."""
+    """Represents a ghostcatd device."""
 
     _PREFIX = "RATBAG_DEVICE_"
 
@@ -326,8 +326,8 @@ class RatbagdDevice(metaclass=MetaRatbag):
     def commit(self):
         """Commits all changes made to the device.
 
-        This is implemented asynchronously inside ratbagd. Hence, we just call
-        this method and always succeed.  Any failure is handled inside ratbagd
+        This is implemented asynchronously inside ghostcatd. Hence, we just call
+        this method and always succeed.  Any failure is handled inside ghostcatd
         by emitting the Resync signal, which automatically resynchronizes the
         device. No further interaction is required by the client.
         """
@@ -335,7 +335,7 @@ class RatbagdDevice(metaclass=MetaRatbag):
 
 
 class RatbagdProfile(metaclass=MetaRatbag):
-    """Represents a ratbagd profile."""
+    """Represents a ghostcatd profile."""
 
     _PREFIX = "RATBAG_PROFILE_"
 
@@ -514,7 +514,7 @@ class RatbagdProfile(metaclass=MetaRatbag):
 
 
 class RatbagdResolution(metaclass=MetaRatbag):
-    """Represents a ratbagd resolution."""
+    """Represents a ghostcatd resolution."""
 
     _PREFIX = "RATBAG_RESOLUTION_"
 
@@ -600,7 +600,7 @@ class RatbagdResolution(metaclass=MetaRatbag):
 
 
 class RatbagdButton(metaclass=MetaRatbag):
-    """Represents a ratbagd button."""
+    """Represents a ghostcatd button."""
 
     _PREFIX = "RATBAG_BUTTON_"
 
@@ -830,7 +830,7 @@ class RatbagdMacro(metaclass=MetaRatbag):
         @param macro The macro in libratbag format, as
                      [(RatbagdButton.MACRO_*, value)].
         """
-        ratbagd_macro = RatbagdMacro()
+        ghostcatd_macro = RatbagdMacro()
 
         for i in range(libratbag.ratbag_button_macro_get_num_events(macro_object)):
             type = libratbag.ratbag_button_macro_get_event_type(macro_object, i)
@@ -839,8 +839,8 @@ class RatbagdMacro(metaclass=MetaRatbag):
                 value = libratbag.ratbag_button_macro_get_event_timeout(macro_object, i)
             else:
                 value = libratbag.ratbag_button_macro_get_event_key(macro_object, i)
-            ratbagd_macro.append(type, value)
-        return ratbagd_macro
+            ghostcatd_macro.append(type, value)
+        return ghostcatd_macro
 
     def accept(self):
         """Applies the currently cached macro."""
@@ -862,7 +862,7 @@ class RatbagdMacro(metaclass=MetaRatbag):
 
 
 class RatbagdLed(metaclass=MetaRatbag):
-    """Represents a ratbagd led."""
+    """Represents a ghostcatd led."""
 
     _PREFIX = "RATBAG_LED_"
 

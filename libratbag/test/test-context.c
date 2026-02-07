@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 
-#include "libratbag.h"
+#include "libghostcat.h"
 
 #define _unused_ __attribute__ ((unused))
 
@@ -55,83 +55,83 @@ close_restricted(int fd, void *user_data)
 	close(fd);
 }
 
-struct ratbag_interface simple_iface = {
+struct ghostcat_interface simple_iface = {
 	.open_restricted = open_restricted,
 	.close_restricted = close_restricted,
 };
 
 START_TEST(context_init_NULL)
 {
-	struct ratbag *lr;
-	lr = ratbag_create_context(NULL, NULL);
+	struct ghostcat *lr;
+	lr = ghostcat_create_context(NULL, NULL);
 	ck_assert(lr == NULL);
 }
 END_TEST
 
 START_TEST(context_init_bad_iface)
 {
-	struct ratbag *lr _unused_;
-	struct ratbag_interface iface = {
+	struct ghostcat *lr _unused_;
+	struct ghostcat_interface iface = {
 		.open_restricted = NULL,
 		.close_restricted = NULL,
 	};
 
-	lr = ratbag_create_context(&iface, NULL);
+	lr = ghostcat_create_context(&iface, NULL);
 	/* abort */
 }
 END_TEST
 
 START_TEST(context_init_bad_iface_open)
 {
-	struct ratbag *lr _unused_;
-	struct ratbag_interface iface = {
+	struct ghostcat *lr _unused_;
+	struct ghostcat_interface iface = {
 		.open_restricted = open_restricted,
 		.close_restricted = NULL,
 	};
 
-	lr = ratbag_create_context(&iface, NULL);
+	lr = ghostcat_create_context(&iface, NULL);
 	/* abort */
 }
 END_TEST
 
 START_TEST(context_init_bad_iface_close)
 {
-	struct ratbag *lr _unused_;
-	struct ratbag_interface iface = {
+	struct ghostcat *lr _unused_;
+	struct ghostcat_interface iface = {
 		.open_restricted = NULL,
 		.close_restricted = close_restricted,
 	};
 
-	lr = ratbag_create_context(&iface, NULL);
+	lr = ghostcat_create_context(&iface, NULL);
 	/* abort */
 }
 END_TEST
 
 START_TEST(context_init)
 {
-	struct ratbag *lr;
+	struct ghostcat *lr;
 
-	lr = ratbag_create_context(&simple_iface, NULL);
+	lr = ghostcat_create_context(&simple_iface, NULL);
 	ck_assert(lr != NULL);
-	ratbag_unref(lr);
+	ghostcat_unref(lr);
 }
 END_TEST
 
 START_TEST(context_ref)
 {
-	struct ratbag *lr;
-	struct ratbag *lr2;
+	struct ghostcat *lr;
+	struct ghostcat *lr2;
 
-	lr = ratbag_create_context(&simple_iface, NULL);
+	lr = ghostcat_create_context(&simple_iface, NULL);
 	ck_assert(lr != NULL);
 
-	lr2 = ratbag_ref(lr);
+	lr2 = ghostcat_ref(lr);
 	ck_assert_ptr_eq(lr, lr2);
 
-	lr2 = ratbag_unref(lr2);
+	lr2 = ghostcat_unref(lr2);
 	ck_assert_ptr_eq(lr2, NULL);
 
-	lr2 = ratbag_unref(lr);
+	lr2 = ghostcat_unref(lr);
 	ck_assert_ptr_eq(lr2, NULL);
 }
 END_TEST
@@ -165,7 +165,7 @@ int main(void)
 	bool using_valgrind;
 	const struct rlimit corelimit = { 0, 0 };
 
-	setenv("RATBAG_TEST", "1", 0);
+	setenv("GHOSTCAT_TEST", "1", 0);
 
 	setrlimit(RLIMIT_CORE, &corelimit);
 

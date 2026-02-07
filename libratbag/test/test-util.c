@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 
-#include "libratbag-util.h"
+#include "libghostcat-util.h"
 
 START_TEST(dpi_range_parser)
 {
@@ -144,7 +144,7 @@ int main(void)
 	SRunner *sr;
 	const struct rlimit corelimit = { 0, 0 };
 
-	setenv("RATBAG_TEST", "1", 0);
+	setenv("GHOSTCAT_TEST", "1", 0);
 
 	setrlimit(RLIMIT_CORE, &corelimit);
 

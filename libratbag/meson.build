@@ -1,4 +1,4 @@
-project('libratbag', 'c',
+project('libghostcat', 'c',
 	version : '0.18',
 	license : 'MIT/Expat',
 	default_options : [ 'c_std=gnu99', 'warning_level=2' ],
@@ -11,17 +11,17 @@ if meson.version().version_compare('>=0.56')
 else
   project_build_root = meson.build_root()
   project_source_root = meson.source_root()
-  message('Embedding libratbag source will not work because an older version of meson is used')
+  message('Embedding libghostcat source will not work because an older version of meson is used')
 endif
 
 # The DBus API version. Increase this every time the DBus API changes.
 # No backwards/forwards guarantee, clients are expected to understand
-# whatever ratbagd speaks or bail out. This should be removed if we ever
+# whatever ghostcatd speaks or bail out. This should be removed if we ever
 # finish the API and declare it stable.
-ratbagd_api_version = 2
+ghostcatd_api_version = 2
 
 # We use libtool-version numbers because it's easier to understand.
-# Before making a release, the libratbag_so_* and liblur_so_*
+# Before making a release, the libghostcat_so_* and liblur_so_*
 # numbers should be modified. The components are of the form C:R:A.
 # a) If binary compatibility has been broken (eg removed or changed interfaces)
 #    change to C+1:0:0.
@@ -51,12 +51,12 @@ add_project_arguments(cflags, language: 'c')
 config_h = configuration_data()
 config_h.set('_GNU_SOURCE', '1')
 config_h.set_quoted('RATBAG_VERSION', meson.project_version())
-config_h.set('RATBAGD_API_VERSION', ratbagd_api_version)
-libratbag_data_dir = join_paths(get_option('prefix'),
+config_h.set('RATBAGD_API_VERSION', ghostcatd_api_version)
+libghostcat_data_dir = join_paths(get_option('prefix'),
 				get_option('datadir'),
-				'libratbag')
-libratbag_data_dir_devel = join_paths(project_source_root, 'data', 'devices')
-config_h.set_quoted('LIBRATBAG_DATA_DIR', libratbag_data_dir)
+				'libghostcat')
+libghostcat_data_dir_devel = join_paths(project_source_root, 'data', 'devices')
+config_h.set_quoted('LIBRATBAG_DATA_DIR', libghostcat_data_dir)
 
 # dependencies
 pkgconfig = import('pkgconfig')
@@ -80,8 +80,8 @@ endif
 
 #### libutil.a ####
 src_libutil = [
-	'src/libratbag-util.c',
-	'src/libratbag-util.h'
+	'src/libghostcat-util.c',
+	'src/libghostcat-util.h'
 ]
 
 deps_libutil = [
@@ -163,13 +163,13 @@ pkgconfig.generate (
         libraries: lib_liblur
 )
 
-#### libratbag.so ####
+#### libghostcat.so ####
 #
-# libratbag is an internal-only library and the bit that does the actual
-# work talking to the mouse. it's used by ratbagd.
-src_libratbag = [
-	'src/libratbag-enums.h',
-	'src/libratbag.h',
+# libghostcat is an internal-only library and the bit that does the actual
+# work talking to the mouse. it's used by ghostcatd.
+src_libghostcat = [
+	'src/libghostcat-enums.h',
+	'src/libghostcat.h',
 	'src/driver-asus.c',
 	'src/driver-etekcity.c',
 	'src/driver-hidpp20.c',
@@ -194,19 +194,19 @@ src_libratbag = [
 	'src/driver-marsgaming/marsgaming-probe.c',
 	'src/driver-marsgaming/marsgaming-query.c',
 	'src/driver-test.c',
-	'src/libratbag.c',
-	'src/libratbag.h',
-	'src/libratbag-data.c',
-	'src/libratbag-data.h',
-	'src/libratbag-hidraw.c',
-	'src/libratbag-hidraw.h',
-	'src/libratbag-private.h',
-	'src/libratbag-test.c',
-	'src/libratbag-test.h',
+	'src/libghostcat.c',
+	'src/libghostcat.h',
+	'src/libghostcat-data.c',
+	'src/libghostcat-data.h',
+	'src/libghostcat-hidraw.c',
+	'src/libghostcat-hidraw.h',
+	'src/libghostcat-private.h',
+	'src/libghostcat-test.c',
+	'src/libghostcat-test.h',
 	'src/usb-ids.h'
 ]
 
-deps_libratbag = [
+deps_libghostcat = [
 	dep_udev,
 	dep_libevdev,
 	dep_glib,
@@ -216,15 +216,15 @@ deps_libratbag = [
 	dep_libasus,
 ]
 
-lib_libratbag = static_library('ratbag',
-	src_libratbag,
+lib_libghostcat = static_library('ratbag',
+	src_libghostcat,
 	include_directories : include_directories('src'),
-	dependencies : deps_libratbag,
+	dependencies : deps_libghostcat,
 )
 
-dep_libratbag = declare_dependency(
-	link_with : lib_libratbag,
-	dependencies : deps_libratbag
+dep_libghostcat = declare_dependency(
+	link_with : lib_libghostcat,
+	dependencies : deps_libghostcat
 )
 
 #### libshared.a ####
@@ -298,16 +298,16 @@ man_lur_command = configure_file (
 install_subdir('data/devices',
 	       strip_directory : true,
 	       exclude_files : ['device.example', 'README.md'],
-	       install_dir : join_paths(get_option('datadir'), 'libratbag'))
+	       install_dir : join_paths(get_option('datadir'), 'libghostcat'))
 
 data_parse_test = find_program(join_paths(project_source_root, 'test/data-parse-test.py'))
-test('data-parse-test', data_parse_test, args: libratbag_data_dir_devel)
+test('data-parse-test', data_parse_test, args: libghostcat_data_dir_devel)
 
 duplicate_test = find_program(join_paths(project_source_root, 'test/duplicate-check.py'))
-test('duplicate-test', duplicate_test, args : libratbag_data_dir_devel)
+test('duplicate-test', duplicate_test, args : libghostcat_data_dir_devel)
 
 receiver_id_test = find_program(join_paths(project_source_root, 'test/receiver-check.py'))
-test('receiver-id-test', receiver_id_test, args : libratbag_data_dir_devel)
+test('receiver-id-test', receiver_id_test, args : libghostcat_data_dir_devel)
 
 #### tests ####
 enable_tests = get_option('tests')
@@ -318,22 +318,22 @@ if enable_tests
 
 	test_context = executable('test-context',
 				  ['test/test-context.c'],
-				  dependencies : [ dep_libratbag, dep_check ],
+				  dependencies : [ dep_libghostcat, dep_check ],
 				  include_directories : include_directories('src'),
 				  install : false)
 	test_device = executable('test-device',
 				 ['test/test-device.c'],
-				 dependencies : [ dep_libratbag, dep_check ],
+				 dependencies : [ dep_libghostcat, dep_check ],
 				 include_directories : include_directories('src'),
 				 install : false)
 	test_util = executable('test-util',
 				 ['test/test-util.c'],
-				 dependencies : [ dep_libratbag, dep_check ],
+				 dependencies : [ dep_libghostcat, dep_check ],
 				 include_directories : include_directories('src'),
 				 install : false)
 	test_iconv_helper = executable('test-iconv-helper',
 				['test/test-iconv-helper.c'],
-				dependencies : [ dep_libratbag,
+				dependencies : [ dep_libghostcat,
 						 dep_check,
 						 dep_libutil],
 				include_directories : include_directories('src'),
@@ -359,50 +359,50 @@ endif
 
 subdir('rbtree')
 
-#### ratbagd ####
+#### ghostcatd ####
 #
-# The main item of this repo, a DBus server that uses libratbag to talk to
+# The main item of this repo, a DBus server that uses libghostcat to talk to
 # the mice. The DBus API is the public-facing API.
 #
-src_ratbagd = [
+src_ghostcatd = [
 	'src/shared-macro.h',
-	'ratbagd/ratbagd.h',
-	'ratbagd/ratbagd.c',
-	'ratbagd/ratbagd-led.c',
-	'ratbagd/ratbagd-button.c',
-	'ratbagd/ratbagd-device.c',
-	'ratbagd/ratbagd-profile.c',
-	'ratbagd/ratbagd-resolution.c',
-	'ratbagd/ratbagd-test.c',
-	'ratbagd/ratbagd-json.c',
-	'ratbagd/ratbagd-json.h',
-	'src/libratbag-util.h',
-	'src/libratbag-util.c',
+	'ghostcatd/ghostcatd.h',
+	'ghostcatd/ghostcatd.c',
+	'ghostcatd/ghostcatd-led.c',
+	'ghostcatd/ghostcatd-button.c',
+	'ghostcatd/ghostcatd-device.c',
+	'ghostcatd/ghostcatd-profile.c',
+	'ghostcatd/ghostcatd-resolution.c',
+	'ghostcatd/ghostcatd-test.c',
+	'ghostcatd/ghostcatd-json.c',
+	'ghostcatd/ghostcatd-json.h',
+	'src/libghostcat-util.h',
+	'src/libghostcat-util.c',
 ]
 
-deps_ratbagd = [
+deps_ghostcatd = [
 	dep_udev,
 	dep_logind,
-	dep_libratbag,
+	dep_libghostcat,
 	dep_rbtree,
 	dep_unistring,
 ]
 
 executable(
-  'ratbagd',
-  src_ratbagd,
-  dependencies : deps_ratbagd,
+  'ghostcatd',
+  src_ghostcatd,
+  dependencies : deps_ghostcatd,
   include_directories : include_directories('src'),
   install : true,
   install_dir : get_option('sbindir'),
 )
 
-install_man('ratbagd/ratbagd.8')
+install_man('ghostcatd/ghostcatd.8')
 
-#### ratbagd_devel ####
+#### ghostcatd_devel ####
 #
-# A development ratbagd server that owns a different name on the bus
-# (org.freedesktop.ratbag_devel1). This server is used by ratbagdctl.devel.
+# A development ghostcatd server that owns a different name on the bus
+# (org.freedesktop.ratbag_devel1). This server is used by ghostcatdctl.devel.
 #
 
 dbus_devel_policy = configure_file(input : 'dbus/org.freedesktop.ratbag_devel1.conf.in',
@@ -416,9 +416,9 @@ dbus_devel_policy = configure_file(input : 'dbus/org.freedesktop.ratbag_devel1.c
 # This is not set in stone, suggest something better if you can.
 dbussystemdir = join_paths('/', get_option('sysconfdir'), 'dbus-1', 'system.d')
 
-executable('ratbagd.devel',
-	   src_ratbagd,
-	   dependencies : deps_ratbagd,
+executable('ghostcatd.devel',
+	   src_ghostcatd,
+	   dependencies : deps_ghostcatd,
 	   include_directories : include_directories('src'),
 	   install : false,
 	   c_args : ['-DRATBAG_DBUS_INTERFACE="ratbag_devel1"',
@@ -444,7 +444,7 @@ if enable_systemd
 			or specify with
 				mesonconf -Dsystemd-unit-dir=<path>
 
-			See https://github.com/libratbag/libratbag/issues/188
+			See https://github.com/libghostcat/libghostcat/issues/188
 			'''.format(default_unitdir))
 			unitdir = default_unitdir
 		else
@@ -461,8 +461,8 @@ config_sbindir.set(
 
 if enable_systemd
   configure_file(
-    input : 'ratbagd/ratbagd.service.in',
-    output : 'ratbagd.service',
+    input : 'ghostcatd/ghostcatd.service.in',
+    output : 'ghostcatd.service',
     configuration : config_sbindir,
     install_dir : unitdir,
   )
@@ -474,8 +474,8 @@ if dbusdir == ''
 endif
 
 configure_file(
-  input : 'dbus/org.freedesktop.ratbag1.service.in',
-  output : 'org.freedesktop.ratbag1.service',
+  input : 'dbus/org.freedesktop.ghostcat1.service.in',
+  output : 'org.freedesktop.ghostcat1.service',
   configuration : config_sbindir,
   install_dir : join_paths(dbusdir, 'system-services')
 )
@@ -492,8 +492,8 @@ endif
 config_dbusaccess = configuration_data()
 config_dbusaccess.set('access', access)
 
-configure_file(input : 'dbus/org.freedesktop.ratbag1.conf.in',
-	       output : 'org.freedesktop.ratbag1.conf',
+configure_file(input : 'dbus/org.freedesktop.ghostcat1.conf.in',
+	       output : 'org.freedesktop.ghostcat1.conf',
 	       configuration : config_dbusaccess,
 	       install_dir : join_paths(dbusdir, 'system.d'))
 
@@ -519,19 +519,19 @@ if not dep_python3.found()
 endif
 
 config_ratbagctl = configuration_data()
-config_ratbagctl.set('RATBAGD_API_VERSION', ratbagd_api_version)
+config_ratbagctl.set('RATBAGD_API_VERSION', ghostcatd_api_version)
 config_ratbagctl.set('version', meson.project_version())
 
 ratbagctl_body = configure_file(input : 'tools/ratbagctl.body.py.in',
 			      output : 'ratbagctl.body.py',
 			      configuration: config_ratbagctl)
 
-# ratbagctl is the commandline tool to interact with ratbagd over DBus.
+# ratbagctl is the commandline tool to interact with ghostcatd over DBus.
 ratbagctl_target = custom_target('ratbagctl',
   output : 'ratbagctl',
-  input : [ratbagctl_body, 'tools/ratbagd.py'],
+  input : [ratbagctl_body, 'tools/ghostcatd.py'],
   build_by_default : true,
-  command : [py3, join_paths(project_source_root, 'tools', 'merge_ratbagd.py'),
+  command : [py3, join_paths(project_source_root, 'tools', 'merge_ghostcatd.py'),
 				'@INPUT@',
 				'--output', '@OUTPUT@'],
   install: true,
@@ -547,23 +547,23 @@ man_ratbagctl = configure_file (
 
 config_ratbagctl_devel = configuration_data()
 config_ratbagctl_devel.set('MESON_BUILD_ROOT', project_build_root)
-config_ratbagctl_devel.set('LIBRATBAG_DATA_DIR', libratbag_data_dir_devel)
-config_ratbagctl_devel.set('RATBAGD_API_VERSION', ratbagd_api_version)
+config_ratbagctl_devel.set('LIBRATBAG_DATA_DIR', libghostcat_data_dir_devel)
+config_ratbagctl_devel.set('RATBAGD_API_VERSION', ghostcatd_api_version)
 
 configure_file(input : 'tools/toolbox.py',
 	       output : 'toolbox.py',
 	       configuration : config_ratbagctl_devel)
-# ratbagctl.devel starts a custom ratbagd and interacts with that over DBus
+# ratbagctl.devel starts a custom ghostcatd and interacts with that over DBus
 configure_file(input : 'tools/ratbagctl.devel.py.in',
 	       output : 'ratbagctl.devel',
 	       configuration : config_ratbagctl_devel)
-# ratbagctl.test starts a custom ratbagd and interacts with that over DBus
+# ratbagctl.test starts a custom ghostcatd and interacts with that over DBus
 configure_file(input : 'tools/ratbagctl.test.py.in',
 	       output : 'ratbagctl.test',
 	       configuration : config_ratbagctl_devel)
 
 env_test = environment()
-env_test.set('LIBRATBAG_DATA_DIR', libratbag_data_dir_devel)
+env_test.set('LIBRATBAG_DATA_DIR', libghostcat_data_dir_devel)
 # See: https://github.com/mesonbuild/meson/issues/3306.
 env_test.set('MESON_SOURCE_ROOT', project_source_root)
 ratbagctl_test = find_program(join_paths(project_build_root, 'ratbagctl.test'))
@@ -577,7 +577,7 @@ test(
   env : env_test,
 )
 
-# ratbag-command uses Swig bindings to call libratbag directly
+# ghostcat-command uses Swig bindings to call libghostcat directly
 swig = find_program('swig')
 swig_gen = generator(
     swig,
@@ -591,21 +591,21 @@ swig_gen = generator(
 
 wrapper_deps = [
     dep_python3,
-    dep_libratbag,
+    dep_libghostcat,
     dep_libshared,
 ]
 
-i_source = join_paths(project_source_root, 'src', 'libratbag.i')
+i_source = join_paths(project_source_root, 'src', 'libghostcat.i')
 c_source = swig_gen.process(i_source)
 shared_library(
-   'libratbag',
+   'libghostcat',
    c_source,
    name_prefix: '_',
    c_args : ['-Wno-missing-prototypes',
              '-Wno-format-nonliteral',
              '-Wno-missing-field-initializers'],
-   extra_files: [ i_source ] + src_libratbag ,
-   dependencies: deps_libratbag + wrapper_deps,
+   extra_files: [ i_source ] + src_libghostcat ,
+   dependencies: deps_libghostcat + wrapper_deps,
    include_directories : include_directories('src', 'tools'),
    install: false,
 )
@@ -620,27 +620,27 @@ shared_library(
              '-Wno-format-nonliteral',
              '-Wno-missing-field-initializers',
              '-Wno-strict-prototypes'],
-   extra_files: [ i_source ] + src_libratbag ,
-   dependencies: deps_libratbag + wrapper_deps,
+   extra_files: [ i_source ] + src_libghostcat ,
+   dependencies: deps_libghostcat + wrapper_deps,
    include_directories : include_directories('src', 'tools'),
    install: false,
 )
 
 # ratbagc is the layer that maps ratbagctl to the swig bindings
 ratbagc_py_conf = configuration_data()
-ratbagc_py_conf.set('LIBRATBAG_DATA_DIR', libratbag_data_dir_devel)
+ratbagc_py_conf.set('LIBRATBAG_DATA_DIR', libghostcat_data_dir_devel)
 ratbagc_py = configure_file(input: 'tools/ratbagc.py.in',
 			    output: 'ratbagc.py',
 			    configuration: ratbagc_py_conf)
 
-# ratbag-command is a commandline tool with the UI as ratbagctl but instead
-# of connecting to ratbagd over DBus, it uses libratbag directly. This is a
+# ghostcat-command is a commandline tool with the UI as ratbagctl but instead
+# of connecting to ghostcatd over DBus, it uses libghostcat directly. This is a
 # development tool for protocol debugging etc.
-custom_target('ratbag-command',
-  output : 'ratbag-command',
+custom_target('ghostcat-command',
+  output : 'ghostcat-command',
   input : [ratbagctl_body, ratbagc_py],
   build_by_default : true,
-  command : [py3, join_paths(project_source_root, 'tools', 'merge_ratbagd.py'),
+  command : [py3, join_paths(project_source_root, 'tools', 'merge_ghostcatd.py'),
 				'@INPUT@',
 				'--output', '@OUTPUT@'],
   install: false)

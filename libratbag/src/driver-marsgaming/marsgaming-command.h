@@ -1,17 +1,17 @@
 #pragma once
-#include "libratbag-private.h"
+#include "libghostcat-private.h"
 
 void
-marsgaming_command_set_current_profile(struct ratbag_device *device, unsigned int profile);
+marsgaming_command_set_current_profile(struct ghostcat_device *device, unsigned int profile);
 
 void
-marsgaming_command_profile_set_polling_interval(struct ratbag_profile *profile, uint8_t polling_interval);
+marsgaming_command_profile_set_polling_interval(struct ghostcat_profile *profile, uint8_t polling_interval);
 
 void
-marsgaming_command_profile_set_led(struct ratbag_led *led);
+marsgaming_command_profile_set_led(struct ghostcat_led *led);
 
 void
-marsgaming_command_profile_set_resolutions(struct ratbag_profile *profile);
+marsgaming_command_profile_set_resolutions(struct ghostcat_profile *profile);
 
 void
-marsgaming_command_profile_set_buttons(struct ratbag_profile *profile);
+marsgaming_command_profile_set_buttons(struct ghostcat_profile *profile);

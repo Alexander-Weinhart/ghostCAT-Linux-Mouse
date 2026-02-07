@@ -22,8 +22,8 @@
  */
 #include "config.h"
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
 
 #include <errno.h>
 #include <stdbool.h>
@@ -200,7 +200,7 @@ struct gskill_button_cfg {
 
 struct gskill_action_mapping {
 	struct gskill_button_cfg config;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 struct gskill_profile_report {
@@ -282,16 +282,16 @@ _Static_assert(sizeof(struct gskill_macro_report) == GSKILL_REPORT_SIZE_MACRO,
 
 struct gskill_button_function_mapping {
 	enum gskill_button_function_type type;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 static const struct gskill_button_function_mapping gskill_button_function_mapping[] = {
 	{ GSKILL_BUTTON_FUNCTION_MACRO,              BUTTON_ACTION_MACRO },
-	{ GSKILL_BUTTON_FUNCTION_DPI_UP,             BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
-	{ GSKILL_BUTTON_FUNCTION_DPI_DOWN,           BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
-	{ GSKILL_BUTTON_FUNCTION_CYCLE_DPI_UP,       BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
-	{ GSKILL_BUTTON_FUNCTION_CYCLE_PROFILE_UP,   BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
-	{ GSKILL_BUTTON_FUNCTION_CYCLE_PROFILE_DOWN, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_DOWN) },
+	{ GSKILL_BUTTON_FUNCTION_DPI_UP,             BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
+	{ GSKILL_BUTTON_FUNCTION_DPI_DOWN,           BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
+	{ GSKILL_BUTTON_FUNCTION_CYCLE_DPI_UP,       BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
+	{ GSKILL_BUTTON_FUNCTION_CYCLE_PROFILE_UP,   BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
+	{ GSKILL_BUTTON_FUNCTION_CYCLE_PROFILE_DOWN, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_DOWN) },
 	{ GSKILL_BUTTON_FUNCTION_DISABLE,            BUTTON_ACTION_NONE },
 };
 
@@ -308,14 +308,14 @@ struct gskill_data {
 };
 
 static inline struct gskill_profile_data *
-profile_to_pdata(struct ratbag_profile *profile)
+profile_to_pdata(struct ghostcat_profile *profile)
 {
 	struct gskill_data *drv_data = profile->device->drv_data;
 
 	return &drv_data->profile_data[profile->index];
 }
 
-static const struct ratbag_button_action *
+static const struct ghostcat_button_action *
 gskill_button_function_to_action(enum gskill_button_function_type type)
 {
 	const struct gskill_button_function_mapping *mapping;
@@ -329,12 +329,12 @@ gskill_button_function_to_action(enum gskill_button_function_type type)
 }
 
 static enum gskill_button_function_type
-gskill_button_function_from_action(const struct ratbag_button_action *action)
+gskill_button_function_from_action(const struct ghostcat_button_action *action)
 {
 	const struct gskill_button_function_mapping *mapping;
 
 	ARRAY_FOR_EACH(gskill_button_function_mapping, mapping) {
-		if (ratbag_button_action_match(&mapping->action, action))
+		if (ghostcat_button_action_match(&mapping->action, action))
 			return mapping->type;
 	}
 
@@ -356,14 +356,14 @@ gskill_calculate_checksum(const uint8_t *buf, size_t len)
 }
 
 static int
-gskill_general_cmd(struct ratbag_device *device,
+gskill_general_cmd(struct ghostcat_device *device,
 		   uint8_t buf[GSKILL_REPORT_SIZE_CMD]) {
 	int rc;
 	int retries;
 
 	assert(buf[0] == GSKILL_GENERAL_CMD);
 
-	rc = ratbag_hidraw_raw_request(device, GSKILL_GENERAL_CMD, buf,
+	rc = ghostcat_hidraw_raw_request(device, GSKILL_GENERAL_CMD, buf,
 				       GSKILL_REPORT_SIZE_CMD,
 				       HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 	if (rc != GSKILL_REPORT_SIZE_CMD) {
@@ -381,7 +381,7 @@ gskill_general_cmd(struct ratbag_device *device,
 		 */
 		msleep(20);
 
-		rc = ratbag_hidraw_raw_request(device, 0, buf,
+		rc = ghostcat_hidraw_raw_request(device, 0, buf,
 					       GSKILL_REPORT_SIZE_CMD,
 					       HID_FEATURE_REPORT,
 					       HID_REQ_GET_REPORT);
@@ -443,7 +443,7 @@ gskill_general_cmd(struct ratbag_device *device,
 }
 
 static int
-gskill_get_active_profile_idx(struct ratbag_device *device)
+gskill_get_active_profile_idx(struct ghostcat_device *device)
 {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x7,
 		0x0, 0x1 };
@@ -461,7 +461,7 @@ gskill_get_active_profile_idx(struct ratbag_device *device)
 }
 
 static int
-gskill_set_active_profile(struct ratbag_device *device, unsigned index)
+gskill_set_active_profile(struct ghostcat_device *device, unsigned index)
 {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x7,
 		index, 0x0 };
@@ -479,7 +479,7 @@ gskill_set_active_profile(struct ratbag_device *device, unsigned index)
 }
 
 static int
-gskill_get_profile_count(struct ratbag_device *device)
+gskill_get_profile_count(struct ghostcat_device *device)
 {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x12,
 		0x0, 0x1 };
@@ -499,7 +499,7 @@ gskill_get_profile_count(struct ratbag_device *device)
 }
 
 static int
-gskill_set_profile_count(struct ratbag_device *device, unsigned int count)
+gskill_set_profile_count(struct ghostcat_device *device, unsigned int count)
 {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x12,
 		count, 0x0 };
@@ -523,7 +523,7 @@ gskill_set_profile_count(struct ratbag_device *device, unsigned int count)
  * reading and writing profiles
  */
 static int
-gskill_select_profile(struct ratbag_device *device, unsigned index, bool write)
+gskill_select_profile(struct ghostcat_device *device, unsigned index, bool write)
 {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x0c,
 		index, write };
@@ -534,7 +534,7 @@ gskill_select_profile(struct ratbag_device *device, unsigned index, bool write)
 	 * behavior, trying to receive the command return status from the mouse
 	 * breaks reading the profile
 	 */
-	rc = ratbag_hidraw_raw_request(device, GSKILL_GENERAL_CMD,
+	rc = ghostcat_hidraw_raw_request(device, GSKILL_GENERAL_CMD,
 				       buf, sizeof(buf), HID_FEATURE_REPORT,
 				       HID_REQ_SET_REPORT);
 	if (rc != sizeof(buf)) {
@@ -552,7 +552,7 @@ gskill_select_profile(struct ratbag_device *device, unsigned index, bool write)
  * it.
  */
 static int
-gskill_reload_profile_data(struct ratbag_device *device)
+gskill_reload_profile_data(struct ghostcat_device *device)
 {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x0 };
 	int rc;
@@ -571,7 +571,7 @@ gskill_reload_profile_data(struct ratbag_device *device)
 }
 
 static int
-gskill_write_profile(struct ratbag_device *device,
+gskill_write_profile(struct ghostcat_device *device,
 		     struct gskill_profile_report *report)
 {
 	uint8_t *buf = (uint8_t*)report;
@@ -585,7 +585,7 @@ gskill_write_profile(struct ratbag_device *device,
 		log_debug(device->ratbag,
 			  "Setting profile name to \"Ratbag profile %d\"\n",
 			  report->profile_num);
-		rc = ratbag_utf8_to_enc(report->name, sizeof(report->name),
+		rc = ghostcat_utf8_to_enc(report->name, sizeof(report->name),
 					"UTF-16LE",
 					"Ratbag profile %d",
 					report->profile_num);
@@ -602,7 +602,7 @@ gskill_write_profile(struct ratbag_device *device,
 	/* Wait for the device to be ready */
 	msleep(200);
 
-	rc = ratbag_hidraw_raw_request(device, GSKILL_GET_SET_PROFILE,
+	rc = ghostcat_hidraw_raw_request(device, GSKILL_GET_SET_PROFILE,
 				       buf, sizeof(*report), HID_FEATURE_REPORT,
 				       HID_REQ_SET_REPORT);
 	if (rc != sizeof(*report)) {
@@ -615,7 +615,7 @@ gskill_write_profile(struct ratbag_device *device,
 }
 
 static int
-gskill_get_firmware_version(struct ratbag_device *device) {
+gskill_get_firmware_version(struct ghostcat_device *device) {
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x08 };
 	int rc;
 
@@ -648,8 +648,8 @@ gskill_mouse_button_macro_code_to_keycode(uint8_t code)
 }
 
 static uint8_t
-gskill_macro_code_from_event(struct ratbag_device *device,
-			     struct ratbag_macro_event *event)
+gskill_macro_code_from_event(struct ghostcat_device *device,
+			     struct ghostcat_macro_event *event)
 {
 	uint8_t macro_code;
 
@@ -657,7 +657,7 @@ gskill_macro_code_from_event(struct ratbag_device *device,
 	 * The miscellaneous keycodes are ORd with 0x70 to indicate press, 0xF0
 	 * to indicate release
 	 */
-	if (event->type == RATBAG_MACRO_EVENT_KEY_PRESSED)
+	if (event->type == GHOSTCAT_MACRO_EVENT_KEY_PRESSED)
 		macro_code = 0x70;
 	else
 		macro_code = 0xF0;
@@ -679,10 +679,10 @@ gskill_macro_code_from_event(struct ratbag_device *device,
 	case KEY_SCROLLDOWN: macro_code  = 0x7e; break;
 	case KEY_SCROLLUP:   macro_code  = 0xfe; break;
 	default:
-		macro_code = ratbag_hidraw_get_keyboard_usage_from_keycode(
+		macro_code = ghostcat_hidraw_get_keyboard_usage_from_keycode(
 		    device, event->event.key);
 
-		if (event->type == RATBAG_MACRO_EVENT_KEY_RELEASED)
+		if (event->type == GHOSTCAT_MACRO_EVENT_KEY_RELEASED)
 			macro_code += 0x80;
 		break;
 	}
@@ -690,12 +690,12 @@ gskill_macro_code_from_event(struct ratbag_device *device,
 	return macro_code;
 }
 
-static struct ratbag_button_macro *
-gskill_macro_from_report(struct ratbag_device *device,
+static struct ghostcat_button_macro *
+gskill_macro_from_report(struct ghostcat_device *device,
 			 struct gskill_macro_report *report)
 {
-	struct ratbag_button_macro *macro;
-	enum ratbag_macro_event_type type;
+	struct ghostcat_button_macro *macro;
+	enum ghostcat_macro_event_type type;
 	const uint8_t *data = (uint8_t*)&report->macro_content;
 	unsigned int event_data;
 	int ret, i, event_idx, increment;
@@ -714,12 +714,12 @@ gskill_macro_from_report(struct ratbag_device *device,
 	 * Since the length is only 8 bits long, it's impossible to specify a
 	 * length that's too large for the macro name
 	 */
-	macro = ratbag_button_macro_new(NULL);
-	ret = ratbag_utf8_from_enc(report->macro_name,
+	macro = ghostcat_button_macro_new(NULL);
+	ret = ghostcat_utf8_from_enc(report->macro_name,
 				   report->macro_name_length, "UTF-16LE",
 				   &macro->macro.name);
 	if (ret < 0) {
-		ratbag_button_macro_unref(macro);
+		ghostcat_button_macro_unref(macro);
 		return NULL;
 	}
 
@@ -733,55 +733,55 @@ gskill_macro_from_report(struct ratbag_device *device,
 			delay = (struct gskill_macro_delay*)&data[i];
 			increment = sizeof(struct gskill_macro_delay);
 
-			type = RATBAG_MACRO_EVENT_WAIT;
+			type = GHOSTCAT_MACRO_EVENT_WAIT;
 			event_data = delay->count;
 
 			break;
 		case 0x04 ... 0x6a: /* HID KBD code, press */
-			type = RATBAG_MACRO_EVENT_KEY_PRESSED;
-			event_data = ratbag_hidraw_get_keycode_from_keyboard_usage(
+			type = GHOSTCAT_MACRO_EVENT_KEY_PRESSED;
+			event_data = ghostcat_hidraw_get_keycode_from_keyboard_usage(
 			    device, data[i]);
 			break;
 		case 0x70 ... 0x77: /* KBD modifier, press */
-			type = RATBAG_MACRO_EVENT_KEY_PRESSED;
-			event_data = ratbag_hidraw_get_keycode_from_keyboard_usage(
+			type = GHOSTCAT_MACRO_EVENT_KEY_PRESSED;
+			event_data = ghostcat_hidraw_get_keycode_from_keyboard_usage(
 			    device, data[i] + 0x70);
 			break;
 		case 0x78 ... 0x7c: /* Mouse button, press */
-			type = RATBAG_MACRO_EVENT_KEY_PRESSED;
+			type = GHOSTCAT_MACRO_EVENT_KEY_PRESSED;
 			event_data = gskill_mouse_button_macro_code_to_keycode(
 			    data[i]);
 			break;
 		case 0x7e: /* Scroll down */
-			type = RATBAG_MACRO_EVENT_KEY_PRESSED;
+			type = GHOSTCAT_MACRO_EVENT_KEY_PRESSED;
 			event_data = KEY_SCROLLDOWN;
 			break;
 		case 0x84 ... 0xef: /* HID KBD code, release */
-			type = RATBAG_MACRO_EVENT_KEY_RELEASED;
-			event_data = ratbag_hidraw_get_keycode_from_keyboard_usage(
+			type = GHOSTCAT_MACRO_EVENT_KEY_RELEASED;
+			event_data = ghostcat_hidraw_get_keycode_from_keyboard_usage(
 			    device, data[i] - 0x80);
 			break;
 		case 0xf0 ... 0xf7: /* KBD modifier, release */
-			type = RATBAG_MACRO_EVENT_KEY_RELEASED;
-			event_data = ratbag_hidraw_get_keycode_from_keyboard_usage(
+			type = GHOSTCAT_MACRO_EVENT_KEY_RELEASED;
+			event_data = ghostcat_hidraw_get_keycode_from_keyboard_usage(
 			    device, data[i] - 0x10);
 			break;
 		case 0xf8 ... 0xfc: /* Mouse button, release */
-			type = RATBAG_MACRO_EVENT_KEY_RELEASED;
+			type = GHOSTCAT_MACRO_EVENT_KEY_RELEASED;
 			event_data = gskill_mouse_button_macro_code_to_keycode(
 			    data[i]);
 			break;
 		case 0xfe: /* Scroll up */
-			type = RATBAG_MACRO_EVENT_KEY_PRESSED;
+			type = GHOSTCAT_MACRO_EVENT_KEY_PRESSED;
 			event_data = KEY_SCROLLUP;
 			break;
 		default:
 			/* should never get there */
-			type = RATBAG_MACRO_EVENT_INVALID;
+			type = GHOSTCAT_MACRO_EVENT_INVALID;
 			event_data = 0;
 		}
 
-		ratbag_button_macro_set_event(macro, event_idx, type,
+		ghostcat_button_macro_set_event(macro, event_idx, type,
 					      event_data);
 	}
 
@@ -793,16 +793,16 @@ gskill_macro_from_report(struct ratbag_device *device,
  * their function declarations
  */
 static struct gskill_macro_report *
-gskill_macro_to_report(struct ratbag_device *device,
-		       struct ratbag_button_macro *macro,
+gskill_macro_to_report(struct ghostcat_device *device,
+		       struct ghostcat_button_macro *macro,
 		       unsigned int profile, unsigned int button)
 {
-	struct gskill_data *drv_data = ratbag_get_drv_data(device);
+	struct gskill_data *drv_data = ghostcat_get_drv_data(device);
 	struct gskill_macro_report *report =
 		&drv_data->profile_data[profile].macros[button];
 	struct gskill_macro_delay *delay;
-	unsigned int event_num = ratbag_button_macro_get_num_events(macro);
-	struct ratbag_macro_event *event;
+	unsigned int event_num = ghostcat_button_macro_get_num_events(macro);
+	struct ghostcat_macro_event *event;
 	uint8_t *buf = report->macro_content;
 	int profile_pos, increment, event_idx;
 	ssize_t ret;
@@ -814,12 +814,12 @@ gskill_macro_to_report(struct ratbag_device *device,
 	 * so make sure we assign one
 	 */
 	if (!macro->macro.name || macro->macro.name[0] == '\0') {
-		ret = ratbag_utf8_to_enc(report->macro_name,
+		ret = ghostcat_utf8_to_enc(report->macro_name,
 					 sizeof(report->macro_name), "UTF-16LE",
 					 "Ratbag macro for profile %d button %d",
 					 profile, button);
 	} else {
-		ret = ratbag_utf8_to_enc(report->macro_name,
+		ret = ghostcat_utf8_to_enc(report->macro_name,
 					 sizeof(report->macro_name), "UTF-16LE",
 					 "%s", macro->macro.name);
 	}
@@ -839,20 +839,20 @@ gskill_macro_to_report(struct ratbag_device *device,
 		event = &macro->macro.events[event_idx];
 
 		switch (event->type) {
-		case RATBAG_MACRO_EVENT_WAIT:
+		case GHOSTCAT_MACRO_EVENT_WAIT:
 			delay = (struct gskill_macro_delay*)&buf[profile_pos];
 			increment = sizeof(*delay);
 
 			delay->tag = 1;
 			delay->count = event->event.timeout;
 			break;
-		case RATBAG_MACRO_EVENT_KEY_PRESSED:
-		case RATBAG_MACRO_EVENT_KEY_RELEASED:
+		case GHOSTCAT_MACRO_EVENT_KEY_PRESSED:
+		case GHOSTCAT_MACRO_EVENT_KEY_RELEASED:
 			buf[profile_pos] = gskill_macro_code_from_event(device,
 									event);
 			break;
-		case RATBAG_MACRO_EVENT_INVALID:
-		case RATBAG_MACRO_EVENT_NONE:
+		case GHOSTCAT_MACRO_EVENT_INVALID:
+		case GHOSTCAT_MACRO_EVENT_NONE:
 			goto out;
 		}
 	}
@@ -864,7 +864,7 @@ out:
 }
 
 static int
-gskill_select_macro(struct ratbag_device *device,
+gskill_select_macro(struct ghostcat_device *device,
 		    unsigned profile, unsigned button, bool write)
 {
 	uint8_t macro_num = (profile * 10) + button;
@@ -876,7 +876,7 @@ gskill_select_macro(struct ratbag_device *device,
 	 * Just like in gskill_select_profile(), we can't use the normal
 	 * command handler for this
 	 */
-	rc = ratbag_hidraw_raw_request(device, GSKILL_GENERAL_CMD, buf,
+	rc = ghostcat_hidraw_raw_request(device, GSKILL_GENERAL_CMD, buf,
 				       sizeof(buf), HID_FEATURE_REPORT,
 				       HID_REQ_SET_REPORT);
 	if (rc != sizeof(buf)) {
@@ -890,10 +890,10 @@ gskill_select_macro(struct ratbag_device *device,
 }
 
 static struct gskill_macro_report *
-gskill_read_button_macro(struct ratbag_device *device,
+gskill_read_button_macro(struct ghostcat_device *device,
 			 unsigned int profile, unsigned int button)
 {
-	struct gskill_data *drv_data = ratbag_get_drv_data(device);
+	struct gskill_data *drv_data = ghostcat_get_drv_data(device);
 	struct gskill_macro_report *report =
 		&drv_data->profile_data[profile].macros[button];
 	uint8_t checksum;
@@ -906,7 +906,7 @@ gskill_read_button_macro(struct ratbag_device *device,
 	/* Wait for the device to be ready */
 	msleep(100);
 
-	rc = ratbag_hidraw_raw_request(device, GSKILL_GET_SET_MACRO,
+	rc = ghostcat_hidraw_raw_request(device, GSKILL_GET_SET_MACRO,
 				       (uint8_t*)report, sizeof(*report),
 				       HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 	if (rc < (signed)sizeof(*report)) {
@@ -928,7 +928,7 @@ gskill_read_button_macro(struct ratbag_device *device,
 }
 
 static int
-gskill_write_button_macro(struct ratbag_device *device,
+gskill_write_button_macro(struct ghostcat_device *device,
 			  struct gskill_macro_report *report)
 {
 	unsigned int profile = report->macro_num / 10;
@@ -947,7 +947,7 @@ gskill_write_button_macro(struct ratbag_device *device,
 	report->checksum = gskill_calculate_checksum((uint8_t*)report,
 						     sizeof(*report));
 
-	rc = ratbag_hidraw_raw_request(device, GSKILL_GET_SET_MACRO,
+	rc = ghostcat_hidraw_raw_request(device, GSKILL_GET_SET_MACRO,
 				       (uint8_t*)report, sizeof(*report),
 				       HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 	if (rc < 0) {
@@ -961,7 +961,7 @@ gskill_write_button_macro(struct ratbag_device *device,
 }
 
 static void
-gskill_read_resolutions(struct ratbag_profile *profile,
+gskill_read_resolutions(struct ghostcat_profile *profile,
 			struct gskill_profile_report *report)
 {
 	struct gskill_profile_data *pdata = profile_to_pdata(profile);
@@ -973,36 +973,36 @@ gskill_read_resolutions(struct ratbag_profile *profile,
 		  profile->index, report->dpi_num);
 
 	hz = GSKILL_MAX_POLLING_RATE / (report->polling_rate + 1);
-	ratbag_profile_set_report_rate_list(profile, rates, ARRAY_LENGTH(rates));
+	ghostcat_profile_set_report_rate_list(profile, rates, ARRAY_LENGTH(rates));
 	profile->hz = hz;
 
 	for (i = 0; i < report->dpi_num; i++) {
-		_cleanup_resolution_ struct ratbag_resolution *resolution = NULL;
+		_cleanup_resolution_ struct ghostcat_resolution *resolution = NULL;
 
 		dpi_x = report->dpi_levels[i].x * GSKILL_DPI_UNIT;
 		dpi_y = report->dpi_levels[i].y * GSKILL_DPI_UNIT;
 
-		resolution = ratbag_profile_get_resolution(profile, i);
-		ratbag_resolution_set_resolution(resolution, dpi_x, dpi_y);
+		resolution = ghostcat_profile_get_resolution(profile, i);
+		ghostcat_resolution_set_resolution(resolution, dpi_x, dpi_y);
 		resolution->is_active = (i == report->current_dpi_level);
 		pdata->res_idx_to_dev_idx[i] = i;
 
-		ratbag_resolution_set_cap(resolution,
-					  RATBAG_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
+		ghostcat_resolution_set_cap(resolution,
+					  GHOSTCAT_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
 
-		ratbag_resolution_set_dpi_list_from_range(resolution,
+		ghostcat_resolution_set_dpi_list_from_range(resolution,
 							  GSKILL_MIN_DPI, GSKILL_MAX_DPI);
 	}
 }
 
 static void
-gskill_read_profile_name(struct ratbag_device *device,
+gskill_read_profile_name(struct ghostcat_device *device,
 			 struct gskill_profile_report *report)
 {
 	char *name;
 	int ret;
 
-	ret = ratbag_utf8_from_enc(report->name, sizeof(report->name),
+	ret = ghostcat_utf8_from_enc(report->name, sizeof(report->name),
 				   "UTF-16LE", &name);
 	if (ret < 0) {
 		log_debug(device->ratbag,
@@ -1017,10 +1017,10 @@ gskill_read_profile_name(struct ratbag_device *device,
 }
 
 static void
-gskill_read_profile(struct ratbag_profile *profile)
+gskill_read_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
-	struct gskill_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = profile->device;
+	struct gskill_data *drv_data = ghostcat_get_drv_data(device);
 	struct gskill_profile_data *pdata = profile_to_pdata(profile);
 	struct gskill_profile_report *report = &pdata->report;
 	uint8_t checksum;
@@ -1047,7 +1047,7 @@ gskill_read_profile(struct ratbag_profile *profile)
 		/* Wait for the device to be ready */
 		msleep(100);
 
-		rc = ratbag_hidraw_raw_request(device, GSKILL_GET_SET_PROFILE,
+		rc = ghostcat_hidraw_raw_request(device, GSKILL_GET_SET_PROFILE,
 					       (uint8_t*)report,
 					       sizeof(*report),
 					       HID_FEATURE_REPORT,
@@ -1077,9 +1077,9 @@ gskill_read_profile(struct ratbag_profile *profile)
 }
 
 static int
-gskill_update_resolutions(struct ratbag_profile *profile)
+gskill_update_resolutions(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct gskill_profile_data *pdata = profile_to_pdata(profile);
 	struct gskill_profile_report *report = &pdata->report;
 	int i;
@@ -1095,11 +1095,11 @@ gskill_update_resolutions(struct ratbag_profile *profile)
 	 * lost on exit
 	 */
 	for (i = 0; i < GSKILL_NUM_DPI; i++) {
-		_cleanup_resolution_ struct ratbag_resolution *res = NULL;
+		_cleanup_resolution_ struct ghostcat_resolution *res = NULL;
 		struct gskill_raw_dpi_level *level =
 			&report->dpi_levels[report->dpi_num];
 
-		res = ratbag_profile_get_resolution(profile, i);
+		res = ghostcat_profile_get_resolution(profile, i);
 		if (!res->dpi_x || !res->dpi_y)
 			continue;
 
@@ -1119,9 +1119,9 @@ gskill_update_resolutions(struct ratbag_profile *profile)
 
 #if 0
 static int
-gskill_reset_profile(struct ratbag_profile *profile)
+gskill_reset_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	uint8_t buf[GSKILL_REPORT_SIZE_CMD] = { GSKILL_GENERAL_CMD, 0xc4, 0x0a,
 		profile->index };
 	int rc;
@@ -1138,46 +1138,46 @@ gskill_reset_profile(struct ratbag_profile *profile)
 #endif
 
 static void
-gskill_read_button(struct ratbag_button *button)
+gskill_read_button(struct ghostcat_button *button)
 {
-	struct ratbag_profile *profile = button->profile;
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_profile *profile = button->profile;
+	struct ghostcat_device *device = profile->device;
 	struct gskill_profile_report *report =
 		&profile_to_pdata(profile)->report;
 	struct gskill_macro_report *macro_report;
-	struct ratbag_button_macro *macro;
+	struct ghostcat_button_macro *macro;
 	struct gskill_button_cfg *bcfg = &report->btn_cfgs[button->index];
-	struct ratbag_button_action *act = &button->action;
+	struct ghostcat_button_action *act = &button->action;
 
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_NONE);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_KEY);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_MACRO);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_NONE);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_KEY);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_MACRO);
 
 	/*
 	 * G.Skill mice can't save disabled profiles, so buttons from disabled
 	 * profiles shouldn't be set to anything
 	 */
 	if (!profile->is_enabled) {
-		act->type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+		act->type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 		return;
 	}
 
 	/* Parse any parameters that might accompany the action type */
 	switch (bcfg->type) {
 	case GSKILL_BUTTON_FUNCTION_WHEEL:
-		act->type = RATBAG_BUTTON_ACTION_TYPE_SPECIAL;
+		act->type = GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL;
 
 		if (bcfg->params.wheel.direction == GSKILL_WHEEL_SCROLL_UP)
 			act->action.special =
-				RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP;
+				GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP;
 		else
 			act->action.special =
-				RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN;
+				GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN;
 		break;
 	case GSKILL_BUTTON_FUNCTION_MOUSE:
-		act->type = RATBAG_BUTTON_ACTION_TYPE_BUTTON;
+		act->type = GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON;
 
 		/* FIXME: There is almost no chance this is correct. */
 		switch (bcfg->params.mouse.button_mask) {
@@ -1199,15 +1199,15 @@ gskill_read_button(struct ratbag_button *button)
 		}
 		break;
 	case GSKILL_BUTTON_FUNCTION_KBD:
-		act->type = RATBAG_BUTTON_ACTION_TYPE_KEY;
+		act->type = GHOSTCAT_BUTTON_ACTION_TYPE_KEY;
 		act->action.key =
-			ratbag_hidraw_get_keycode_from_keyboard_usage(
+			ghostcat_hidraw_get_keycode_from_keyboard_usage(
 			    device, bcfg->params.kbd.hid_code);
 		break;
 	case GSKILL_BUTTON_FUNCTION_CONSUMER:
-		act->type = RATBAG_BUTTON_ACTION_TYPE_KEY;
+		act->type = GHOSTCAT_BUTTON_ACTION_TYPE_KEY;
 		act->action.key =
-			ratbag_hidraw_get_keycode_from_consumer_usage(
+			ghostcat_hidraw_get_keycode_from_consumer_usage(
 			    device, bcfg->params.consumer.code);
 		break;
 	case GSKILL_BUTTON_FUNCTION_DPI_UP:
@@ -1229,9 +1229,9 @@ gskill_read_button(struct ratbag_button *button)
 		if (!macro)
 			goto err;
 
-		act->type = RATBAG_BUTTON_ACTION_TYPE_MACRO;
-		ratbag_button_copy_macro(button, macro);
-		ratbag_button_macro_unref(macro);
+		act->type = GHOSTCAT_BUTTON_ACTION_TYPE_MACRO;
+		ghostcat_button_copy_macro(button, macro);
+		ghostcat_button_macro_unref(macro);
 		break;
 	default:
 		break;
@@ -1240,16 +1240,16 @@ gskill_read_button(struct ratbag_button *button)
 	return;
 
 err:
-	act->type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+	act->type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 }
 
 static int
-gskill_update_button(struct ratbag_button *button)
+gskill_update_button(struct ghostcat_button *button)
 {
-	struct ratbag_profile *profile = button->profile;
-	struct ratbag_device *device = profile->device;
-	struct ratbag_button_action *action = &button->action;
-	struct ratbag_button_macro *macro = NULL;
+	struct ghostcat_profile *profile = button->profile;
+	struct ghostcat_device *device = profile->device;
+	struct ghostcat_button_action *action = &button->action;
+	struct ghostcat_button_macro *macro = NULL;
 	struct gskill_profile_data *pdata = profile_to_pdata(profile);
 	struct gskill_button_cfg *bcfg = &pdata->report.btn_cfgs[button->index];
 	uint16_t code = 0;
@@ -1258,22 +1258,22 @@ gskill_update_button(struct ratbag_button *button)
 	memset(&bcfg->params, 0, sizeof(bcfg->params));
 
 	switch (action->type) {
-	case RATBAG_BUTTON_ACTION_TYPE_SPECIAL:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL:
 		switch (action->action.special) {
-		case RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP:
 			bcfg->type = GSKILL_BUTTON_FUNCTION_WHEEL;
 			bcfg->params.wheel.direction = GSKILL_WHEEL_SCROLL_UP;
 			break;
-		case RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN:
 			bcfg->type = GSKILL_BUTTON_FUNCTION_WHEEL;
 			bcfg->params.wheel.direction = GSKILL_WHEEL_SCROLL_DOWN;
 			break;
-		case RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP:
-		case RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP:
-		case RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN:
-		case RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP:
-		case RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_UP:
-		case RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_DOWN:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_UP:
+		case GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_DOWN:
 			bcfg->type = gskill_button_function_from_action(action);
 			break;
 		default:
@@ -1281,7 +1281,7 @@ gskill_update_button(struct ratbag_button *button)
 		}
 
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_BUTTON:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON:
 		bcfg->type = GSKILL_BUTTON_FUNCTION_MOUSE;
 
 		/* FIXME: There is almost no chance this is correct. */
@@ -1306,21 +1306,21 @@ gskill_update_button(struct ratbag_button *button)
 		}
 
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_KEY:
-		code = ratbag_hidraw_get_keyboard_usage_from_keycode(
+	case GHOSTCAT_BUTTON_ACTION_TYPE_KEY:
+		code = ghostcat_hidraw_get_keyboard_usage_from_keycode(
 		    device, action->action.key);
 		if (code) {
 			bcfg->type = GSKILL_BUTTON_FUNCTION_KBD;
 			bcfg->params.kbd.hid_code = code;
 		} else {
-			code = ratbag_hidraw_get_consumer_usage_from_keycode(
+			code = ghostcat_hidraw_get_consumer_usage_from_keycode(
 			    device, action->action.key);
 
 			bcfg->type = GSKILL_BUTTON_FUNCTION_CONSUMER;
 			bcfg->params.consumer.code = code;
 		}
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_MACRO:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_MACRO:
 		bcfg->type = GSKILL_BUTTON_FUNCTION_MACRO;
 		gskill_write_button_macro(
 		    device, gskill_macro_to_report(device, macro,
@@ -1328,7 +1328,7 @@ gskill_update_button(struct ratbag_button *button)
 						   button->index));
 
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_NONE:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_NONE:
 		bcfg->type = GSKILL_BUTTON_FUNCTION_DISABLE;
 		break;
 	default:
@@ -1339,10 +1339,10 @@ gskill_update_button(struct ratbag_button *button)
 }
 
 static int
-gskill_update_profile(struct ratbag_profile *profile)
+gskill_update_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
-	struct ratbag_button *button;
+	struct ghostcat_device *device = profile->device;
+	struct ghostcat_button *button;
 	struct gskill_profile_data *pdata = profile_to_pdata(profile);
 	struct gskill_profile_report *report = &pdata->report;
 	int rc;
@@ -1366,19 +1366,19 @@ gskill_update_profile(struct ratbag_profile *profile)
 }
 
 static int
-gskill_probe(struct ratbag_device *device)
+gskill_probe(struct ghostcat_device *device)
 {
 	struct gskill_data *drv_data = NULL;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	unsigned int active_idx;
 	int ret;
 
-	ret = ratbag_open_hidraw(device);
+	ret = ghostcat_open_hidraw(device);
 	if (ret)
 		return ret;
 
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 
 	ret = gskill_get_firmware_version(device);
 	if (ret < 0)
@@ -1392,7 +1392,7 @@ gskill_probe(struct ratbag_device *device)
 		goto err;
 	drv_data->profile_count = ret;
 
-	ratbag_device_init_profiles(device, GSKILL_PROFILE_MAX, GSKILL_NUM_DPI,
+	ghostcat_device_init_profiles(device, GSKILL_PROFILE_MAX, GSKILL_NUM_DPI,
 				    GSKILL_BUTTON_MAX, GSKILL_NUM_LED);
 
 	ret = gskill_get_active_profile_idx(device);
@@ -1400,15 +1400,15 @@ gskill_probe(struct ratbag_device *device)
 		goto err;
 
 	active_idx = ret;
-	ratbag_device_for_each_profile(device, profile) {
-		struct ratbag_button *button;
+	ghostcat_device_for_each_profile(device, profile) {
+		struct ghostcat_button *button;
 
 		gskill_read_profile(profile);
 
-		ratbag_profile_for_each_button(profile, button)
+		ghostcat_profile_for_each_button(profile, button)
 			gskill_read_button(button);
 
-		ratbag_profile_set_cap(profile, RATBAG_PROFILE_CAP_DISABLE);
+		ghostcat_profile_set_cap(profile, GHOSTCAT_PROFILE_CAP_DISABLE);
 
 		if (profile->index == active_idx)
 			profile->is_active = true;
@@ -1418,19 +1418,19 @@ gskill_probe(struct ratbag_device *device)
 
 err:
 	if (drv_data) {
-		ratbag_set_drv_data(device, NULL);
+		ghostcat_set_drv_data(device, NULL);
 		free(drv_data);
 	}
 
-	ratbag_close_hidraw(device);
+	ghostcat_close_hidraw(device);
 	return ret;
 }
 
 static int
-gskill_commit(struct ratbag_device *device)
+gskill_commit(struct ghostcat_device *device)
 {
-	struct ratbag_profile *profile;
-	struct gskill_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_profile *profile;
+	struct gskill_data *drv_data = ghostcat_get_drv_data(device);
 	struct gskill_profile_report *report;
 	uint8_t profile_count = 0, new_idx, i;
 	bool reload = false;
@@ -1443,7 +1443,7 @@ gskill_commit(struct ratbag_device *device)
 	 * enabled profiles and make sure no holes are left in between profiles
 	 */
 	for (i = 0; i < GSKILL_PROFILE_MAX; i++) {
-		profile = ratbag_device_get_profile(device, i);
+		profile = ghostcat_device_get_profile(device, i);
 
 		if (!profile->is_enabled)
 			continue;
@@ -1492,13 +1492,13 @@ gskill_commit(struct ratbag_device *device)
 }
 
 static void
-gskill_remove(struct ratbag_device *device)
+gskill_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
-struct ratbag_driver gskill_driver = {
+struct ghostcat_driver gskill_driver = {
 	.name = "G.Skill Ripjaws MX780",
 	.id = "gskill",
 	.probe = gskill_probe,

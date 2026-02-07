@@ -30,9 +30,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
-#include "libratbag-data.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
+#include "libghostcat-data.h"
 
 #include "asus.h"
 
@@ -50,13 +50,13 @@ static int ASUS_CONFIG_BUTTON_MAPPING[] = {
 
 /* LedModes configuration property defaults */
 static unsigned int ASUS_LED_MODE[] = {
-	RATBAG_LED_ON,
-	RATBAG_LED_BREATHING,
-	RATBAG_LED_CYCLE,
-	RATBAG_LED_ON,  /* rainbow wave */
-	RATBAG_LED_ON,  /* reactive - react to clicks */
-	RATBAG_LED_ON,  /* custom - depends on mouse type */
-	RATBAG_LED_ON,  /* battery - battery indicator */
+	GHOSTCAT_LED_ON,
+	GHOSTCAT_LED_BREATHING,
+	GHOSTCAT_LED_CYCLE,
+	GHOSTCAT_LED_ON,  /* rainbow wave */
+	GHOSTCAT_LED_ON,  /* reactive - react to clicks */
+	GHOSTCAT_LED_ON,  /* custom - depends on mouse type */
+	GHOSTCAT_LED_ON,  /* battery - battery indicator */
 };
 
 struct asus_data {
@@ -67,24 +67,24 @@ struct asus_data {
 };
 
 static int
-asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *profile, int dpi_preset)
+asus_driver_load_profile(struct ghostcat_device *device, struct ghostcat_profile *profile, int dpi_preset)
 {
 	int rc;
 	const struct _asus_binding *asus_binding;
 	const struct _asus_led *asus_led;
 	const struct asus_button *asus_button;
-	struct ratbag_button *button;
-	struct ratbag_led *led;
-	struct ratbag_resolution *resolution;
+	struct ghostcat_button *button;
+	struct ghostcat_led *led;
+	struct ghostcat_resolution *resolution;
 	union asus_binding_data binding_data;
 	union asus_binding_data binding_data_secondary;
 	union asus_led_data led_data;
 	union asus_resolution_data resolution_data;
 	union asus_resolution_data xy_resolution_data;
-	unsigned int dpi_count = ratbag_device_get_profile(device, 0)->num_resolutions;
-	unsigned int led_count = ratbag_device_get_num_leds(device);
-	uint32_t quirks = ratbag_device_data_asus_get_quirks(device->data);
-	struct asus_data *drv_data = ratbag_get_drv_data(device);
+	unsigned int dpi_count = ghostcat_device_get_profile(device, 0)->num_resolutions;
+	unsigned int led_count = ghostcat_device_get_num_leds(device);
+	uint32_t quirks = ghostcat_device_data_asus_get_quirks(device->data);
+	struct asus_data *drv_data = ghostcat_get_drv_data(device);
 
 	/* get buttons */
 
@@ -99,7 +99,7 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 			return rc;
 	}
 
-	ratbag_profile_for_each_button(profile, button) {
+	ghostcat_profile_for_each_button(profile, button) {
 		int asus_index = drv_data->button_indices[button->index];
 		if (asus_index == -1) {
 			log_debug(device->ratbag, "No mapping for button %d\n", button->index);
@@ -114,14 +114,14 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 
 		/* disabled */
 		if (asus_binding->action == ASUS_BUTTON_CODE_DISABLED) {
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 			continue;
 		}
 
 		/* got action */
 		switch (asus_binding->type) {
 		case ASUS_BUTTON_ACTION_TYPE_KEY:
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_KEY;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_KEY;
 			rc = asus_get_linux_key_code(asus_binding->action);
 			if (rc > 0) {
 				button->action.action.key = (unsigned int)rc;
@@ -134,9 +134,9 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 			asus_button = asus_find_button_by_code(asus_binding->action);
 			if (asus_button != NULL) {  /* found button to bind to */
 				button->action.type = asus_button->type;
-				if (asus_button->type == RATBAG_BUTTON_ACTION_TYPE_BUTTON)
+				if (asus_button->type == GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON)
 					button->action.action.button = asus_button->button;
-				else if (asus_button->type == RATBAG_BUTTON_ACTION_TYPE_SPECIAL)
+				else if (asus_button->type == GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL)
 					button->action.action.special = asus_button->special;
 			} else {
 				log_debug(device->ratbag, "Unknown action code %02x\n", asus_binding->action);
@@ -166,15 +166,15 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 		profile->hz = resolution_data.data2.rate;
 		profile->angle_snapping = resolution_data.data2.snapping;
 		profile->debounce = resolution_data.data2.response;
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			if (quirks & ASUS_QUIRK_SEPARATE_XY_DPI) {
-				ratbag_resolution_set_cap(resolution, RATBAG_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
-				ratbag_resolution_set_resolution(
+				ghostcat_resolution_set_cap(resolution, GHOSTCAT_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
+				ghostcat_resolution_set_resolution(
 					resolution,
 					xy_resolution_data.data_xy.dpi[resolution->index].x,
 					xy_resolution_data.data_xy.dpi[resolution->index].y);
 			} else {
-				ratbag_resolution_set_resolution(
+				ghostcat_resolution_set_resolution(
 					resolution,
 					resolution_data.data2.dpi[resolution->index],
 					resolution_data.data2.dpi[resolution->index]);
@@ -188,15 +188,15 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 		profile->hz = resolution_data.data4.rate;
 		profile->angle_snapping = resolution_data.data4.snapping;
 		profile->debounce = resolution_data.data4.response;
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			if (quirks & ASUS_QUIRK_SEPARATE_XY_DPI) {
-				ratbag_resolution_set_cap(resolution, RATBAG_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
-				ratbag_resolution_set_resolution(
+				ghostcat_resolution_set_cap(resolution, GHOSTCAT_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
+				ghostcat_resolution_set_resolution(
 					resolution,
 					xy_resolution_data.data_xy.dpi[resolution->index].x,
 					xy_resolution_data.data_xy.dpi[resolution->index].y);
 			} else {
-				ratbag_resolution_set_resolution(
+				ghostcat_resolution_set_resolution(
 					resolution,
 					resolution_data.data4.dpi[resolution->index],
 					resolution_data.data4.dpi[resolution->index]);
@@ -219,7 +219,7 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 			return rc;
 	}
 
-	ratbag_profile_for_each_led(profile, led) {
+	ghostcat_profile_for_each_led(profile, led) {
 		if (quirks & ASUS_QUIRK_SEPARATE_LEDS) {
 			log_debug(device->ratbag, "Loading LED %d data\n", led->index);
 			rc = asus_get_led_data(device, &led_data, led->index);
@@ -246,17 +246,17 @@ asus_driver_load_profile(struct ratbag_device *device, struct ratbag_profile *pr
 }
 
 static int
-asus_driver_save_profile(struct ratbag_device *device, struct ratbag_profile *profile)
+asus_driver_save_profile(struct ghostcat_device *device, struct ghostcat_profile *profile)
 {
 	int rc = 0;
-	struct ratbag_button *button;
-	struct ratbag_led *led;
-	struct ratbag_resolution *resolution;
-	struct asus_data *drv_data = ratbag_get_drv_data(device);
-	uint32_t quirks = ratbag_device_data_asus_get_quirks(device->data);
+	struct ghostcat_button *button;
+	struct ghostcat_led *led;
+	struct ghostcat_resolution *resolution;
+	struct asus_data *drv_data = ghostcat_get_drv_data(device);
+	uint32_t quirks = ghostcat_device_data_asus_get_quirks(device->data);
 
 	/* set buttons */
-	ratbag_profile_for_each_button(profile, button) {
+	ghostcat_profile_for_each_button(profile, button) {
 		if (!button->dirty)
 			continue;
 
@@ -282,13 +282,13 @@ asus_driver_save_profile(struct ratbag_device *device, struct ratbag_profile *pr
 			  button->index, asus_code_src);
 
 		switch (button->action.type) {
-		case RATBAG_BUTTON_ACTION_TYPE_NONE:
+		case GHOSTCAT_BUTTON_ACTION_TYPE_NONE:
 			rc = asus_set_button_action(
 				device, asus_code_src, ASUS_BUTTON_CODE_DISABLED,
 				ASUS_BUTTON_ACTION_TYPE_BUTTON);
 			break;
 
-		case RATBAG_BUTTON_ACTION_TYPE_KEY:
+		case GHOSTCAT_BUTTON_ACTION_TYPE_KEY:
 			/* Linux code to ASUS code */
 			rc = asus_find_key_code(button->action.action.key);
 			if (rc != -1) {
@@ -299,8 +299,8 @@ asus_driver_save_profile(struct ratbag_device *device, struct ratbag_profile *pr
 			}
 			break;
 
-		case RATBAG_BUTTON_ACTION_TYPE_BUTTON:
-		case RATBAG_BUTTON_ACTION_TYPE_SPECIAL:
+		case GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON:
+		case GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL:
 			/* ratbag action to ASUS code */
 			is_joystick = asus_code_is_joystick(asus_code_src);
 			if (is_joystick) {
@@ -349,7 +349,7 @@ asus_driver_save_profile(struct ratbag_device *device, struct ratbag_profile *pr
 	}
 
 	/* set DPIs */
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		if (!resolution->dirty)
 			continue;
 
@@ -363,7 +363,7 @@ asus_driver_save_profile(struct ratbag_device *device, struct ratbag_profile *pr
 	}
 
 	/* set LEDs */
-	ratbag_profile_for_each_led(profile, led) {
+	ghostcat_profile_for_each_led(profile, led) {
 		if (!led->dirty)
 			continue;
 
@@ -392,11 +392,11 @@ asus_driver_save_profile(struct ratbag_device *device, struct ratbag_profile *pr
 }
 
 static int
-asus_driver_load_profiles(struct ratbag_device *device)
+asus_driver_load_profiles(struct ghostcat_device *device)
 {
 	int rc;
 	struct asus_profile_data profile_data;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	unsigned int current_profile_id = 0;
 
 	/* get current profile id */
@@ -421,7 +421,7 @@ asus_driver_load_profiles(struct ratbag_device *device)
 		profile_data.version_secondary_build);
 
 	/* read ratbag profiles */
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		if (profile->index == current_profile_id) {  /* profile is already selected */
 			profile->is_active = true;
 		} else {  /* switch profile */
@@ -450,11 +450,11 @@ asus_driver_load_profiles(struct ratbag_device *device)
 }
 
 static int
-asus_driver_save_profiles(struct ratbag_device *device)
+asus_driver_save_profiles(struct ghostcat_device *device)
 {
 	int rc;
 	struct asus_profile_data profile_data;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	unsigned int current_profile_id = 0;
 
 	/* get current profile id */
@@ -467,7 +467,7 @@ asus_driver_save_profiles(struct ratbag_device *device)
 		log_debug(device->ratbag, "Initial profile is %d\n", current_profile_id);
 	}
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		if (!profile->dirty)
 			continue;
 
@@ -504,40 +504,40 @@ asus_driver_save_profiles(struct ratbag_device *device)
 }
 
 static int
-asus_driver_probe(struct ratbag_device *device)
+asus_driver_probe(struct ghostcat_device *device)
 {
 	int rc;
 	unsigned int profile_count, dpi_count, button_count, led_count;
 	const struct asus_button *asus_button;
 	struct asus_data *drv_data;
 	struct asus_profile_data profile_data;
-	struct ratbag_profile *profile;
-	struct ratbag_button *button;
-	struct ratbag_resolution *resolution;
-	struct ratbag_led *led;
+	struct ghostcat_profile *profile;
+	struct ghostcat_button *button;
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_led *led;
 
-	rc = ratbag_open_hidraw(device);
+	rc = ghostcat_open_hidraw(device);
 	if (rc)
 		return rc;
 
 	rc = asus_get_profile_data(device, &profile_data);
 	if (rc) {
-		ratbag_close_hidraw(device);
+		ghostcat_close_hidraw(device);
 		return -ENODEV;
 	}
 
 	/* create device state data */
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 	drv_data->is_ready = 1;
 
 	/* get device properties from configuration file */
-	profile_count = ratbag_device_data_asus_get_profile_count(device->data);
-	dpi_count = ratbag_device_data_asus_get_dpi_count(device->data);
-	button_count = ratbag_device_data_asus_get_button_count(device->data);
-	led_count = ratbag_device_data_asus_get_led_count(device->data);
-	const int *bm = ratbag_device_data_asus_get_button_mapping(device->data);
-	const int *led_modes = ratbag_device_data_asus_get_led_modes(device->data);
+	profile_count = ghostcat_device_data_asus_get_profile_count(device->data);
+	dpi_count = ghostcat_device_data_asus_get_dpi_count(device->data);
+	button_count = ghostcat_device_data_asus_get_button_count(device->data);
+	led_count = ghostcat_device_data_asus_get_led_count(device->data);
+	const int *bm = ghostcat_device_data_asus_get_button_mapping(device->data);
+	const int *led_modes = ghostcat_device_data_asus_get_led_modes(device->data);
 
 	/* merge ButtonMapping configuration property with defaults */
 	for (unsigned int i = 0; i < ASUS_MAX_NUM_BUTTON * ASUS_MAX_NUM_BUTTON_GROUP; i++) {
@@ -575,7 +575,7 @@ asus_driver_probe(struct ratbag_device *device)
 	}
 
 	/* init profiles */
-	ratbag_device_init_profiles(
+	ghostcat_device_init_profiles(
 		device,
 		max(profile_count, 1),
 		max(dpi_count, 2),
@@ -583,20 +583,20 @@ asus_driver_probe(struct ratbag_device *device)
 		max(led_count, 0));
 
 	/* setup profiles */
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		if (profile->index == 0) {
 			profile->is_active = true;
 		}
 
 		asus_setup_profile(device, profile);
 
-		ratbag_profile_for_each_button(profile, button)
+		ghostcat_profile_for_each_button(profile, button)
 			asus_setup_button(device, button);
 
-		ratbag_profile_for_each_resolution(profile, resolution)
+		ghostcat_profile_for_each_resolution(profile, resolution)
 			asus_setup_resolution(device, resolution);
 
-		ratbag_profile_for_each_led(profile, led)
+		ghostcat_profile_for_each_led(profile, led)
 			asus_setup_led(device, led);
 	}
 
@@ -609,7 +609,7 @@ asus_driver_probe(struct ratbag_device *device)
 			device->ratbag, "Can't talk to the mouse: '%s' (%d)\n",
 			strerror(-rc), rc);
 		free(drv_data);
-		ratbag_set_drv_data(device, NULL);
+		ghostcat_set_drv_data(device, NULL);
 		return -ENODEV;
 	}
 
@@ -617,20 +617,20 @@ asus_driver_probe(struct ratbag_device *device)
 }
 
 static void
-asus_driver_remove(struct ratbag_device *device)
+asus_driver_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
 static int
-asus_driver_commit(struct ratbag_device *device)
+asus_driver_commit(struct ghostcat_device *device)
 {
 	int rc;
 	struct asus_data *drv_data;
 
 	/* check last device state */
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 	if (!drv_data->is_ready) {  /* device was not ready */
 		log_error(device->ratbag, "Device was not ready, trying to reload\n");
 		rc = asus_driver_load_profiles(device);
@@ -642,7 +642,7 @@ asus_driver_commit(struct ratbag_device *device)
 			drv_data->is_ready = 1;
 			log_error(device->ratbag, "Device was successfully reloaded\n");
 		}
-		return RATBAG_ERROR_DEVICE;  /* fail in any case because we tried to rollback instead of commit */
+		return GHOSTCAT_ERROR_DEVICE;  /* fail in any case because we tried to rollback instead of commit */
 	}
 
 	/* save profiles */
@@ -651,13 +651,13 @@ asus_driver_commit(struct ratbag_device *device)
 		log_error(device->ratbag, "Commit failed (%d)\n", rc);
 		if (rc != ASUS_STATUS_ERROR)
 			return rc;
-		return RATBAG_ERROR_DEVICE;
+		return GHOSTCAT_ERROR_DEVICE;
 	}
 
 	return 0;
 }
 
-struct ratbag_driver asus_driver = {
+struct ghostcat_driver asus_driver = {
 	.name = "ASUS",
 	.id = "asus",
 	.probe = asus_driver_probe,

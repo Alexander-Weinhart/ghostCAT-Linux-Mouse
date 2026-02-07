@@ -1,5 +1,5 @@
 #pragma once
-#include "libratbag-private.h"
+#include "libghostcat-private.h"
 
 enum marsgaming_button_action {
 	MARSGAMING_MM4_ACTION_LEFT_CLICK = 0x01,
@@ -74,9 +74,9 @@ struct marsgaming_optional_button_info {
 	};
 };
 
-struct ratbag_button_action
-marsgaming_parse_button_to_action(struct ratbag_button *button,
+struct ghostcat_button_action
+marsgaming_parse_button_to_action(struct ghostcat_button *button,
 				  const struct marsgaming_button_info *button_info);
 
 struct marsgaming_optional_button_info
-marsgaming_button_of_type(struct ratbag_button *button);
+marsgaming_button_of_type(struct ghostcat_button *button);

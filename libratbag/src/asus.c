@@ -27,8 +27,8 @@
 
 #include <assert.h>
 
-#include "libratbag-data.h"
-#include "libratbag-private.h"
+#include "libghostcat-data.h"
+#include "libghostcat-private.h"
 
 /* ASUS commands */
 #define ASUS_CMD_GET_LED_DATA		0x0312  /* get all LEDs */
@@ -81,14 +81,14 @@ static const unsigned int ASUS_DEBOUNCE_TIMES[] = { 4, 8, 12, 16, 20, 24, 28, 32
 
 /* search for ASUS button by ratbag types */
 const struct asus_button *
-asus_find_button_by_action(struct ratbag_button_action action, bool is_joystick)
+asus_find_button_by_action(struct ghostcat_button_action action, bool is_joystick)
 {
 	const struct asus_button *asus_button;
 	ARRAY_FOR_EACH(ASUS_BUTTON_MAPPING, asus_button) {
 		if (is_joystick != asus_code_is_joystick(asus_button->asus_code))
 			continue;
-		if ((action.type == RATBAG_BUTTON_ACTION_TYPE_BUTTON && asus_button->button == action.action.button) ||
-				(action.type == RATBAG_BUTTON_ACTION_TYPE_SPECIAL && asus_button->special == action.action.special))
+		if ((action.type == GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON && asus_button->button == action.action.button) ||
+				(action.type == GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL && asus_button->special == action.action.special))
 			return asus_button;
 	}
 	return NULL;
@@ -134,17 +134,17 @@ asus_get_linux_key_code(uint8_t asus_code) {
 }
 
 int
-asus_query(struct ratbag_device *device,
+asus_query(struct ghostcat_device *device,
 		union asus_request *request, union asus_response *response)
 {
 	int rc;
 
-	rc = ratbag_hidraw_output_report(device, request->raw, ASUS_PACKET_SIZE);
+	rc = ghostcat_hidraw_output_report(device, request->raw, ASUS_PACKET_SIZE);
 	if (rc < 0)
 		return rc;
 
 	memset(response, 0, sizeof(union asus_response));
-	rc = ratbag_hidraw_read_input_report(device, response->raw, ASUS_PACKET_SIZE, NULL);
+	rc = ghostcat_hidraw_read_input_report(device, response->raw, ASUS_PACKET_SIZE, NULL);
 	if (rc < 0)
 		return rc;
 
@@ -157,44 +157,44 @@ asus_query(struct ratbag_device *device,
 }
 
 void
-asus_setup_profile(struct ratbag_device *device, struct ratbag_profile *profile)
+asus_setup_profile(struct ghostcat_device *device, struct ghostcat_profile *profile)
 {
-	ratbag_profile_set_report_rate_list(
+	ghostcat_profile_set_report_rate_list(
 		profile, ASUS_POLLING_RATES, ARRAY_LENGTH(ASUS_POLLING_RATES));
-	ratbag_profile_set_debounce_list(
+	ghostcat_profile_set_debounce_list(
 		 profile, ASUS_DEBOUNCE_TIMES, ARRAY_LENGTH(ASUS_DEBOUNCE_TIMES));
 }
 
 void
-asus_setup_button(struct ratbag_device *device, struct ratbag_button *button)
+asus_setup_button(struct ghostcat_device *device, struct ghostcat_button *button)
 {
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_KEY);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_KEY);
 }
 
 void
-asus_setup_resolution(struct ratbag_device *device, struct ratbag_resolution *resolution)
+asus_setup_resolution(struct ghostcat_device *device, struct ghostcat_resolution *resolution)
 {
-	const struct dpi_range *dpirange = ratbag_device_data_asus_get_dpi_range(device->data);
+	const struct dpi_range *dpirange = ghostcat_device_data_asus_get_dpi_range(device->data);
 	if (!dpirange)
 		return;
 
-	ratbag_resolution_set_dpi_list_from_range(
+	ghostcat_resolution_set_dpi_list_from_range(
 		resolution, dpirange->min, dpirange->max);
 }
 
 void
-asus_setup_led(struct ratbag_device *device, struct ratbag_led *led)
+asus_setup_led(struct ghostcat_device *device, struct ghostcat_led *led)
 {
-	led->colordepth = RATBAG_LED_COLORDEPTH_RGB_888;
-	ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
-	ratbag_led_set_mode_capability(led, RATBAG_LED_CYCLE);
-	ratbag_led_set_mode_capability(led, RATBAG_LED_BREATHING);
+	led->colordepth = GHOSTCAT_LED_COLORDEPTH_RGB_888;
+	ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
+	ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_CYCLE);
+	ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_BREATHING);
 }
 
 int
-asus_save_profile(struct ratbag_device *device)
+asus_save_profile(struct ghostcat_device *device)
 {
 	int rc;
 	union asus_response response;
@@ -210,10 +210,10 @@ asus_save_profile(struct ratbag_device *device)
 }
 
 int
-asus_get_profile_data(struct ratbag_device *device, struct asus_profile_data *data)
+asus_get_profile_data(struct ghostcat_device *device, struct asus_profile_data *data)
 {
 	int rc;
-	uint32_t quirks = ratbag_device_data_asus_get_quirks(device->data);
+	uint32_t quirks = ghostcat_device_data_asus_get_quirks(device->data);
 	union asus_response response;
 	union asus_request request = {
 		.data.cmd = ASUS_CMD_GET_PROFILE_DATA,
@@ -245,7 +245,7 @@ asus_get_profile_data(struct ratbag_device *device, struct asus_profile_data *da
 }
 
 int
-asus_set_profile(struct ratbag_device *device, unsigned int index)
+asus_set_profile(struct ghostcat_device *device, unsigned int index)
 {
 	int rc;
 	union asus_response response;
@@ -263,7 +263,7 @@ asus_set_profile(struct ratbag_device *device, unsigned int index)
 
 /* read button bindings */
 int
-asus_get_binding_data(struct ratbag_device *device, union asus_binding_data *data, unsigned int group)
+asus_get_binding_data(struct ghostcat_device *device, union asus_binding_data *data, unsigned int group)
 {
 	int rc;
 	union asus_response response;
@@ -282,7 +282,7 @@ asus_get_binding_data(struct ratbag_device *device, union asus_binding_data *dat
 
 /* set button binding using ASUS code of the button */
 int
-asus_set_button_action(struct ratbag_device *device, uint8_t asus_code_src,
+asus_set_button_action(struct ghostcat_device *device, uint8_t asus_code_src,
 		       uint8_t asus_code_dst, uint8_t asus_type)
 {
 	int rc;
@@ -307,12 +307,12 @@ asus_set_button_action(struct ratbag_device *device, uint8_t asus_code_src,
 }
 
 int
-asus_get_resolution_data(struct ratbag_device *device, union asus_resolution_data *data, bool sep_xy_dpi)
+asus_get_resolution_data(struct ghostcat_device *device, union asus_resolution_data *data, bool sep_xy_dpi)
 {
 	int rc;
-	uint32_t quirks = ratbag_device_data_asus_get_quirks(device->data);
+	uint32_t quirks = ghostcat_device_data_asus_get_quirks(device->data);
 	union asus_response response;
-	unsigned int dpi_count = ratbag_device_get_profile(device, 0)->num_resolutions;
+	unsigned int dpi_count = ghostcat_device_get_profile(device, 0)->num_resolutions;
 	unsigned int i;
 	union asus_request request = {
 		.data.cmd = ASUS_CMD_GET_SETTINGS,
@@ -367,10 +367,10 @@ asus_get_resolution_data(struct ratbag_device *device, union asus_resolution_dat
 
 /* set DPI for the specified preset */
 int
-asus_set_dpi(struct ratbag_device *device, unsigned int index, unsigned int dpi)
+asus_set_dpi(struct ghostcat_device *device, unsigned int index, unsigned int dpi)
 {
 	int rc;
-	uint32_t quirks = ratbag_device_data_asus_get_quirks(device->data);
+	uint32_t quirks = ghostcat_device_data_asus_get_quirks(device->data);
 	union asus_response response;
 	unsigned int idpi;
 
@@ -393,11 +393,11 @@ asus_set_dpi(struct ratbag_device *device, unsigned int index, unsigned int dpi)
 
 /* set polling rate in Hz */
 int
-asus_set_polling_rate(struct ratbag_device *device, unsigned int hz)
+asus_set_polling_rate(struct ghostcat_device *device, unsigned int hz)
 {
 	int rc;
 	union asus_response response;
-	unsigned int dpi_count = ratbag_device_get_profile(device, 0)->num_resolutions;
+	unsigned int dpi_count = ghostcat_device_get_profile(device, 0)->num_resolutions;
 	unsigned int i;
 
 	union asus_request request = {
@@ -421,12 +421,12 @@ asus_set_polling_rate(struct ratbag_device *device, unsigned int hz)
 
 /* set button response/debounce in ms (from 4 to 32 with step of 4) */
 int
-asus_set_button_response(struct ratbag_device *device, unsigned int ms)
+asus_set_button_response(struct ghostcat_device *device, unsigned int ms)
 {
 	assert(ms >= 4);
 
 	int rc;
-	unsigned int dpi_count = ratbag_device_get_profile(device, 0)->num_resolutions;
+	unsigned int dpi_count = ghostcat_device_get_profile(device, 0)->num_resolutions;
 	union asus_response response;
 	unsigned int index = 0;
 	for (unsigned int i = 0; i < ARRAY_LENGTH(ASUS_DEBOUNCE_TIMES); i++) {
@@ -450,11 +450,11 @@ asus_set_button_response(struct ratbag_device *device, unsigned int ms)
 }
 
 int
-asus_set_angle_snapping(struct ratbag_device *device, bool is_enabled)
+asus_set_angle_snapping(struct ghostcat_device *device, bool is_enabled)
 {
 	int rc;
 	union asus_response response;
-	unsigned int dpi_count = ratbag_device_get_profile(device, 0)->num_resolutions;
+	unsigned int dpi_count = ghostcat_device_get_profile(device, 0)->num_resolutions;
 
 	union asus_request request = {
 		.data.cmd = ASUS_CMD_SET_SETTING,
@@ -470,7 +470,7 @@ asus_set_angle_snapping(struct ratbag_device *device, bool is_enabled)
 }
 
 int
-asus_get_led_data(struct ratbag_device *device, union asus_led_data *data, unsigned int led)
+asus_get_led_data(struct ghostcat_device *device, union asus_led_data *data, unsigned int led)
 {
 	int rc;
 	union asus_response response;
@@ -489,9 +489,9 @@ asus_get_led_data(struct ratbag_device *device, union asus_led_data *data, unsig
 
 /* set LED mode, brightness (0-4) and color */
 int
-asus_set_led(struct ratbag_device *device,
+asus_set_led(struct ghostcat_device *device,
 		uint8_t index, uint8_t mode, uint8_t brightness,
-		struct ratbag_color color)
+		struct ghostcat_color color)
 {
 	int rc;
 	union asus_response response;

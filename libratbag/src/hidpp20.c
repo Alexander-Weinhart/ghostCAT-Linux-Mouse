@@ -38,10 +38,10 @@
 #include <string.h>
 
 #include "hidpp20.h"
-#include "libratbag.h"
-#include "libratbag-hidraw.h"
-#include "libratbag-util.h"
-#include "libratbag-private.h"
+#include "libghostcat.h"
+#include "libghostcat-hidraw.h"
+#include "libghostcat-util.h"
+#include "libghostcat-private.h"
 
 const char*
 hidpp20_feature_get_name(uint16_t feature)
@@ -3026,31 +3026,31 @@ hidpp20_onboard_profiles_commit(struct hidpp20_device *device,
 	return hidpp20_onboard_profiles_write_dict(device, profiles_list);
 }
 
-static const enum ratbag_button_action_special hidpp20_profiles_specials[] = {
-	[0x00] = RATBAG_BUTTON_ACTION_SPECIAL_INVALID,
-	[0x01] = RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_LEFT,
-	[0x02] = RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT,
-	[0x03] = RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP,
-	[0x04] = RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN,
-	[0x05] = RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP,
-	[0x06] = RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DEFAULT,
-	[0x07] = RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE,
-	[0x08] = RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_UP,
-	[0x09] = RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_DOWN,
-	[0x0a] = RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP,
-	[0x0b] = RATBAG_BUTTON_ACTION_SPECIAL_SECOND_MODE,
+static const enum ghostcat_button_action_special hidpp20_profiles_specials[] = {
+	[0x00] = GHOSTCAT_BUTTON_ACTION_SPECIAL_INVALID,
+	[0x01] = GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_LEFT,
+	[0x02] = GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT,
+	[0x03] = GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP,
+	[0x04] = GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN,
+	[0x05] = GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP,
+	[0x06] = GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DEFAULT,
+	[0x07] = GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_ALTERNATE,
+	[0x08] = GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_UP,
+	[0x09] = GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_DOWN,
+	[0x0a] = GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP,
+	[0x0b] = GHOSTCAT_BUTTON_ACTION_SPECIAL_SECOND_MODE,
 
-	[0x0c ... 0xff] = RATBAG_BUTTON_ACTION_SPECIAL_INVALID,
+	[0x0c ... 0xff] = GHOSTCAT_BUTTON_ACTION_SPECIAL_INVALID,
 };
 
-enum ratbag_button_action_special
+enum ghostcat_button_action_special
 hidpp20_onboard_profiles_get_special(uint8_t code)
 {
 	return hidpp20_profiles_specials[code];
 }
 
 uint8_t
-hidpp20_onboard_profiles_get_code_from_special(enum ratbag_button_action_special special)
+hidpp20_onboard_profiles_get_code_from_special(enum ghostcat_button_action_special special)
 {
 	uint8_t i = 0;
 
@@ -3059,7 +3059,7 @@ hidpp20_onboard_profiles_get_code_from_special(enum ratbag_button_action_special
 			return i;
 	}
 
-	return RATBAG_BUTTON_ACTION_SPECIAL_INVALID;
+	return GHOSTCAT_BUTTON_ACTION_SPECIAL_INVALID;
 }
 
 /* -------------------------------------------------------------------------- */

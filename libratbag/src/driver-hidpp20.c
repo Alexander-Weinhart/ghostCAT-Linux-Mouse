@@ -43,9 +43,9 @@
 
 #include "hidpp20.h"
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
-#include "libratbag-data.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
+#include "libghostcat-data.h"
 
 #define HIDPP_CAP_RESOLUTION_2200			(1 << 0)
 #define HIDPP_CAP_SWITCHABLE_RESOLUTION_2201		(1 << 1)
@@ -82,12 +82,12 @@ struct hidpp20drv_data {
 };
 
 static void
-hidpp20drv_read_button_1b04(struct ratbag_button *button)
+hidpp20drv_read_button_1b04(struct ghostcat_button *button)
 {
-	struct ratbag_device *device = button->profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = button->profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_control_id *control;
-	const struct ratbag_button_action *action;
+	const struct ghostcat_button_action *action;
 	uint16_t mapping;
 
 	if (!(drv_data->capabilities & HIDPP_CAP_BUTTON_KEY_1b04))
@@ -106,16 +106,16 @@ hidpp20drv_read_button_1b04(struct ratbag_button *button)
 		  __FILE__, __LINE__);
 	action = hidpp20_1b04_get_logical_mapping(mapping);
 	if (action)
-		ratbag_button_set_action(button, action);
+		ghostcat_button_set_action(button, action);
 
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_NONE);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_KEY);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_NONE);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_KEY);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
 }
 
 static unsigned int
-hidpp20drv_read_macro_key_8100(struct ratbag_device *device, union hidpp20_macro_data *macro)
+hidpp20drv_read_macro_key_8100(struct ghostcat_device *device, union hidpp20_macro_data *macro)
 {
 	switch (macro->key.modifier) {
 	case 0x01: return KEY_LEFTCTRL;
@@ -128,16 +128,16 @@ hidpp20drv_read_macro_key_8100(struct ratbag_device *device, union hidpp20_macro
 	case 0x80: return KEY_RIGHTMETA;
 	}
 
-	return ratbag_hidraw_get_keycode_from_keyboard_usage(device, macro->key.key);
+	return ghostcat_hidraw_get_keycode_from_keyboard_usage(device, macro->key.key);
 }
 
 static int
-hidpp20drv_read_macro_8100(struct ratbag_button *button,
+hidpp20drv_read_macro_8100(struct ghostcat_button *button,
 			   struct hidpp20_profile *profile,
 			   union hidpp20_button_binding *binding)
 {
-	struct ratbag_device *device = button->profile->device;
-	struct ratbag_button_macro *m;
+	struct ghostcat_device *device = button->profile->device;
+	struct ghostcat_button_macro *m;
 	union hidpp20_macro_data *macro;
 	unsigned int i, keycode;
 	bool delay = true;
@@ -149,40 +149,40 @@ hidpp20drv_read_macro_8100(struct ratbag_button *button,
 
 	i = 0;
 
-	m = ratbag_button_macro_new("macro");
+	m = ghostcat_button_macro_new("macro");
 
 	while (macro && macro->any.type != HIDPP20_MACRO_END && i < MAX_MACRO_EVENTS) {
 		switch (macro->any.type) {
 		case HIDPP20_MACRO_DELAY:
-			ratbag_button_macro_set_event(m,
+			ghostcat_button_macro_set_event(m,
 						      i++,
-						      RATBAG_MACRO_EVENT_WAIT,
+						      GHOSTCAT_MACRO_EVENT_WAIT,
 						      macro->delay.time);
 			delay = true;
 			break;
 		case HIDPP20_MACRO_KEY_PRESS:
 			keycode = hidpp20drv_read_macro_key_8100(device, macro);
 			if (!delay)
-				ratbag_button_macro_set_event(m,
+				ghostcat_button_macro_set_event(m,
 							      i++,
-							      RATBAG_MACRO_EVENT_WAIT,
+							      GHOSTCAT_MACRO_EVENT_WAIT,
 							      1);
-			ratbag_button_macro_set_event(m,
+			ghostcat_button_macro_set_event(m,
 						      i++,
-						      RATBAG_MACRO_EVENT_KEY_PRESSED,
+						      GHOSTCAT_MACRO_EVENT_KEY_PRESSED,
 						      keycode);
 			delay = false;
 			break;
 		case HIDPP20_MACRO_KEY_RELEASE:
 			keycode = hidpp20drv_read_macro_key_8100(device, macro);
 			if (!delay)
-				ratbag_button_macro_set_event(m,
+				ghostcat_button_macro_set_event(m,
 							      i++,
-							      RATBAG_MACRO_EVENT_WAIT,
+							      GHOSTCAT_MACRO_EVENT_WAIT,
 							      1);
-			ratbag_button_macro_set_event(m,
+			ghostcat_button_macro_set_event(m,
 						      i++,
-						      RATBAG_MACRO_EVENT_KEY_RELEASED,
+						      GHOSTCAT_MACRO_EVENT_KEY_RELEASED,
 						      keycode);
 			delay = false;
 			break;
@@ -190,17 +190,17 @@ hidpp20drv_read_macro_8100(struct ratbag_button *button,
 		macro++;
 	}
 
-	ratbag_button_copy_macro(button, m);
-	ratbag_button_macro_unref(m);
+	ghostcat_button_copy_macro(button, m);
+	ghostcat_button_macro_unref(m);
 
 	return 0;
 }
 
 static void
-hidpp20drv_read_button_8100(struct ratbag_button *button)
+hidpp20drv_read_button_8100(struct ghostcat_button *button)
 {
-	struct ratbag_device *device = button->profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = button->profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_profile *profile;
 	unsigned int modifiers = 0;
 	int rc;
@@ -214,67 +214,67 @@ hidpp20drv_read_button_8100(struct ratbag_button *button)
 	case HIDPP20_BUTTON_HID_TYPE:
 		switch (profile->buttons[button->index].subany.subtype) {
 		case HIDPP20_BUTTON_HID_TYPE_NOOP:
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 			break;
 		case HIDPP20_BUTTON_HID_TYPE_MOUSE:
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_BUTTON;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON;
 			button->action.action.button = profile->buttons[button->index].button.buttons;
 			break;
 		case HIDPP20_BUTTON_HID_TYPE_KEYBOARD:
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_KEY;
-			button->action.action.key = ratbag_hidraw_get_keycode_from_keyboard_usage(device,
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_KEY;
+			button->action.action.key = ghostcat_hidraw_get_keycode_from_keyboard_usage(device,
 								profile->buttons[button->index].keyboard_keys.key);
 			modifiers = profile->buttons[button->index].keyboard_keys.modifier_flags;
 			break;
 		case HIDPP20_BUTTON_HID_TYPE_CONSUMER_CONTROL:
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_KEY;
-			button->action.action.key = ratbag_hidraw_get_keycode_from_consumer_usage(device,
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_KEY;
+			button->action.action.key = ghostcat_hidraw_get_keycode_from_consumer_usage(device,
 								profile->buttons[button->index].consumer_control.consumer_control);
 			break;
 		}
 		break;
 	case HIDPP20_BUTTON_SPECIAL:
-		button->action.type = RATBAG_BUTTON_ACTION_TYPE_SPECIAL;
+		button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL;
 		button->action.action.special = hidpp20_onboard_profiles_get_special(profile->buttons[button->index].special.special);
 		break;
 	case HIDPP20_BUTTON_MACRO:
 		rc = hidpp20drv_read_macro_8100(button, profile, &profile->buttons[button->index]);
 		if (rc)
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 		break;
 	default:
-		button->action.type = RATBAG_BUTTON_ACTION_TYPE_UNKNOWN;
+		button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_UNKNOWN;
 		break;
 	}
 
-	if (button->action.type == RATBAG_BUTTON_ACTION_TYPE_KEY) {
-		rc = ratbag_button_macro_new_from_keycode(button,
+	if (button->action.type == GHOSTCAT_BUTTON_ACTION_TYPE_KEY) {
+		rc = ghostcat_button_macro_new_from_keycode(button,
 							  button->action.action.key,
 							  modifiers);
 		if (rc < 0) {
 			log_error(device->ratbag,
 				  "Error while reading button %d\n",
 				  button->index);
-			button->action.type = RATBAG_BUTTON_ACTION_TYPE_NONE;
+			button->action.type = GHOSTCAT_BUTTON_ACTION_TYPE_NONE;
 		}
 	}
 
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_NONE);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_KEY);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_MACRO);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_NONE);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_KEY);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_MACRO);
 }
 
 static void
-hidpp20drv_read_button(struct ratbag_button *button)
+hidpp20drv_read_button(struct ghostcat_button *button)
 {
 	hidpp20drv_read_button_1b04(button);
 	hidpp20drv_read_button_8100(button);
 }
 
 static void
-hidpp20drv_read_led_1300(struct ratbag_led *led, struct hidpp20drv_data* data)
+hidpp20drv_read_led_1300(struct ghostcat_led *led, struct hidpp20drv_data* data)
 {
 	struct hidpp20_led_sw_ctrl_led_state state;
 	struct hidpp20_led_sw_ctrl_led_info *info;
@@ -287,37 +287,37 @@ hidpp20drv_read_led_1300(struct ratbag_led *led, struct hidpp20drv_data* data)
 	if (rc != 0)
 		return;
 
-	led->colordepth = RATBAG_LED_COLORDEPTH_MONOCHROME;
+	led->colordepth = GHOSTCAT_LED_COLORDEPTH_MONOCHROME;
 
 	switch (state.mode)
 	{
 	case HIDPP20_LED_MODE_OFF:
-		led->mode = RATBAG_LED_OFF;
+		led->mode = GHOSTCAT_LED_OFF;
 		break;
 	case HIDPP20_LED_MODE_ON:
-		led->mode = RATBAG_LED_ON;
+		led->mode = GHOSTCAT_LED_ON;
 		break;
 	case HIDPP20_LED_MODE_BREATHING:
-		led->mode = RATBAG_LED_BREATHING;
+		led->mode = GHOSTCAT_LED_BREATHING;
 		led->ms = state.breathing.period;
 		led->brightness = state.breathing.brightness;
 		break;
 	default:
-		led->mode = RATBAG_LED_ON;
+		led->mode = GHOSTCAT_LED_ON;
 	}
 
 	if (info->caps & HIDPP20_LED_MODE_ON)
-		ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
+		ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
 	if (info->caps & HIDPP20_LED_MODE_OFF)
-		ratbag_led_set_mode_capability(led, RATBAG_LED_OFF);
+		ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_OFF);
 	if (info->caps & (HIDPP20_LED_MODE_BLINK | HIDPP20_LED_MODE_TRAVEL |
 			  HIDPP20_LED_MODE_RAMP_UP | HIDPP20_LED_MODE_RAMP_DOWN |
 			  HIDPP20_LED_MODE_HEARTBEAT | HIDPP20_LED_MODE_BREATHING))
-		ratbag_led_set_mode_capability(led, RATBAG_LED_BREATHING);
+		ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_BREATHING);
 }
 
 static void
-hidpp20drv_read_led_8070(struct ratbag_led *led, struct hidpp20drv_data* drv_data)
+hidpp20drv_read_led_8070(struct ghostcat_led *led, struct hidpp20drv_data* drv_data)
 {
 	struct hidpp20_profile *profile;
 	struct hidpp20_led h_led_val;
@@ -341,16 +341,16 @@ hidpp20drv_read_led_8070(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 
 	switch (h_led->mode) {
 	case HIDPP20_LED_ON:
-		led->mode = RATBAG_LED_ON;
+		led->mode = GHOSTCAT_LED_ON;
 		break;
 	case HIDPP20_LED_CYCLE:
-		led->mode = RATBAG_LED_CYCLE;
+		led->mode = GHOSTCAT_LED_CYCLE;
 		break;
 	case HIDPP20_LED_BREATHING:
-		led->mode = RATBAG_LED_BREATHING;
+		led->mode = GHOSTCAT_LED_BREATHING;
 		break;
 	default:
-		led->mode = RATBAG_LED_OFF;
+		led->mode = GHOSTCAT_LED_OFF;
 		break;
 	}
 
@@ -363,9 +363,9 @@ hidpp20drv_read_led_8070(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 	rc = hidpp20_color_led_effects_get_info(drv_data->dev, &info);
 	if (rc == 0 &&
 	    info.ext_caps & HIDPP20_COLOR_LED_INFO_EXT_CAP_MONOCHROME_ONLY)
-		led->colordepth = RATBAG_LED_COLORDEPTH_MONOCHROME;
+		led->colordepth = GHOSTCAT_LED_COLORDEPTH_MONOCHROME;
 	else
-		led->colordepth = RATBAG_LED_COLORDEPTH_RGB_888;
+		led->colordepth = GHOSTCAT_LED_COLORDEPTH_RGB_888;
 
 	for (int i = 0; i < led_info->num_effects; i++) {
 		struct hidpp20_color_led_zone_effect_info ei;
@@ -377,17 +377,17 @@ hidpp20drv_read_led_8070(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 
 		switch (ei.effect_id) {
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_DISABLED:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_OFF);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_OFF);
 			break;
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_FIXED:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
 			break;
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_CYCLING:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_CYCLE);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_CYCLE);
 			break;
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_WAVE:
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_BREATHING:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_BREATHING);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_BREATHING);
 			break;
 		default:
 			log_debug(led->profile->device->ratbag,
@@ -400,7 +400,7 @@ hidpp20drv_read_led_8070(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 }
 
 static void
-hidpp20drv_read_led_8071(struct ratbag_led *led, struct hidpp20drv_data* drv_data)
+hidpp20drv_read_led_8071(struct ghostcat_led *led, struct hidpp20drv_data* drv_data)
 {
 	struct hidpp20_profile *profile;
 	struct hidpp20_led *h_led;
@@ -421,16 +421,16 @@ hidpp20drv_read_led_8071(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 
 	switch (h_led->mode) {
 	case HIDPP20_LED_ON:
-		led->mode = RATBAG_LED_ON;
+		led->mode = GHOSTCAT_LED_ON;
 		break;
 	case HIDPP20_LED_CYCLE:
-		led->mode = RATBAG_LED_CYCLE;
+		led->mode = GHOSTCAT_LED_CYCLE;
 		break;
 	case HIDPP20_LED_BREATHING:
-		led->mode = RATBAG_LED_BREATHING;
+		led->mode = GHOSTCAT_LED_BREATHING;
 		break;
 	default:
-		led->mode = RATBAG_LED_OFF;
+		led->mode = GHOSTCAT_LED_OFF;
 		break;
 	}
 
@@ -441,9 +441,9 @@ hidpp20drv_read_led_8071(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 	led->brightness = h_led->brightness * 255 / 100;
 
 	if (device_info.ext_caps & HIDPP20_COLOR_LED_INFO_EXT_CAP_MONOCHROME_ONLY)
-		led->colordepth = RATBAG_LED_COLORDEPTH_MONOCHROME;
+		led->colordepth = GHOSTCAT_LED_COLORDEPTH_MONOCHROME;
 	else
-		led->colordepth = RATBAG_LED_COLORDEPTH_RGB_888;
+		led->colordepth = GHOSTCAT_LED_COLORDEPTH_RGB_888;
 
 	for (int i = 0; i < cluster_info.num_effects; i++) {
 		struct hidpp20_rgb_effect_info ei;
@@ -455,17 +455,17 @@ hidpp20drv_read_led_8071(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 
 		switch (ei.effect_id) {
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_DISABLED:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_OFF);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_OFF);
 			break;
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_FIXED:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_ON);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_ON);
 			break;
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_CYCLING:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_CYCLE);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_CYCLE);
 			break;
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_WAVE:
 		case HIDPP20_COLOR_LED_ZONE_EFFECT_BREATHING:
-			ratbag_led_set_mode_capability(led, RATBAG_LED_BREATHING);
+			ghostcat_led_set_mode_capability(led, GHOSTCAT_LED_BREATHING);
 			break;
 		default:
 			log_debug(led->profile->device->ratbag,
@@ -478,10 +478,10 @@ hidpp20drv_read_led_8071(struct ratbag_led *led, struct hidpp20drv_data* drv_dat
 }
 
 static void
-hidpp20drv_read_led(struct ratbag_led *led)
+hidpp20drv_read_led(struct ghostcat_led *led)
 {
-	struct ratbag_device *device = led->profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = led->profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 
 	if (drv_data->capabilities & HIDPP_CAP_COLOR_LED_EFFECTS_8070)
 		hidpp20drv_read_led_8070(led, drv_data);
@@ -492,12 +492,12 @@ hidpp20drv_read_led(struct ratbag_led *led)
 }
 
 static int
-hidpp20drv_update_button_1b04(struct ratbag_button *button)
+hidpp20drv_update_button_1b04(struct ghostcat_button *button)
 {
-	struct ratbag_device *device = button->profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = button->profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_control_id *control;
-	struct ratbag_button_action *action = &button->action;
+	struct ghostcat_button_action *action = &button->action;
 	uint16_t mapping;
 	int rc;
 
@@ -524,12 +524,12 @@ hidpp20drv_update_button_1b04(struct ratbag_button *button)
 }
 
 static int
-hidpp20drv_update_button_8100(struct ratbag_button *button)
+hidpp20drv_update_button_8100(struct ghostcat_button *button)
 {
-	struct ratbag_device *device = button->profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = button->profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_profile *profile;
-	struct ratbag_button_action *action = &button->action;
+	struct ghostcat_button_action *action = &button->action;
 	unsigned int modifiers, key;
 	int rc;
 	uint8_t code, type, subtype;
@@ -540,15 +540,15 @@ hidpp20drv_update_button_8100(struct ratbag_button *button)
 	profile = &drv_data->profiles->profiles[button->profile->index];
 
 	switch (action->type) {
-	case RATBAG_BUTTON_ACTION_TYPE_BUTTON:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON:
 		profile->buttons[button->index].button.type = HIDPP20_BUTTON_HID_TYPE;
 		profile->buttons[button->index].button.subtype = HIDPP20_BUTTON_HID_TYPE_MOUSE;
 		profile->buttons[button->index].button.buttons = action->action.button;
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_MACRO:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_MACRO:
 		type = HIDPP20_BUTTON_HID_TYPE;
 		subtype = HIDPP20_BUTTON_HID_TYPE_KEYBOARD;
-		rc = ratbag_action_keycode_from_macro(action,
+		rc = ghostcat_action_keycode_from_macro(action,
 						      &key,
 						      &modifiers);
 		if (rc < 0) {
@@ -557,10 +557,10 @@ hidpp20drv_update_button_8100(struct ratbag_button *button)
 				  button->index);
 		}
 
-		code = ratbag_hidraw_get_keyboard_usage_from_keycode(device, key);
+		code = ghostcat_hidraw_get_keyboard_usage_from_keycode(device, key);
 		if (code == 0) {
 			subtype = HIDPP20_BUTTON_HID_TYPE_CONSUMER_CONTROL;
-			code = ratbag_hidraw_get_consumer_usage_from_keycode(device, key);
+			code = ghostcat_hidraw_get_consumer_usage_from_keycode(device, key);
 			if (code == 0)
 				return -EINVAL;
 		}
@@ -573,13 +573,13 @@ hidpp20drv_update_button_8100(struct ratbag_button *button)
 			profile->buttons[button->index].consumer_control.consumer_control = code;
 		}
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_KEY:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_KEY:
 		type = HIDPP20_BUTTON_HID_TYPE;
 		subtype = HIDPP20_BUTTON_HID_TYPE_KEYBOARD;
-		code = ratbag_hidraw_get_keyboard_usage_from_keycode(device, action->action.key);
+		code = ghostcat_hidraw_get_keyboard_usage_from_keycode(device, action->action.key);
 		if (code == 0) {
 			subtype = HIDPP20_BUTTON_HID_TYPE_CONSUMER_CONTROL;
-			code = ratbag_hidraw_get_consumer_usage_from_keycode(device, action->action.key);
+			code = ghostcat_hidraw_get_consumer_usage_from_keycode(device, action->action.key);
 			if (code == 0)
 				return -EINVAL;
 		}
@@ -590,14 +590,14 @@ hidpp20drv_update_button_8100(struct ratbag_button *button)
 		else
 			profile->buttons[button->index].consumer_control.consumer_control = code;
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_SPECIAL:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL:
 		code = hidpp20_onboard_profiles_get_code_from_special(action->action.special);
 		if (code == 0)
 			return -EINVAL;
 		profile->buttons[button->index].special.type = HIDPP20_BUTTON_SPECIAL;
 		profile->buttons[button->index].special.special = code;
 		break;
-	case RATBAG_BUTTON_ACTION_TYPE_NONE:
+	case GHOSTCAT_BUTTON_ACTION_TYPE_NONE:
 		profile->buttons[button->index].disabled.type = HIDPP20_BUTTON_HID_TYPE_NOOP;
 		break;
 	default:
@@ -608,10 +608,10 @@ hidpp20drv_update_button_8100(struct ratbag_button *button)
 }
 
 static int
-hidpp20drv_update_button(struct ratbag_button *button)
+hidpp20drv_update_button(struct ghostcat_button *button)
 {
-	struct ratbag_device *device = button->profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = button->profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 
 	if (drv_data->capabilities & HIDPP_CAP_ONBOARD_PROFILES_8100)
 		return hidpp20drv_update_button_8100(button);
@@ -623,7 +623,7 @@ hidpp20drv_update_button(struct ratbag_button *button)
 }
 
 static int
-hidpp20drv_update_led_1300(struct ratbag_led *led, struct hidpp20drv_data *data)
+hidpp20drv_update_led_1300(struct ghostcat_led *led, struct hidpp20drv_data *data)
 {
 	const uint16_t led_caps = data->led_infos.leds[led->index].caps;
 	struct hidpp20_led_sw_ctrl_led_state h_led;
@@ -633,21 +633,21 @@ hidpp20drv_update_led_1300(struct ratbag_led *led, struct hidpp20drv_data *data)
 
 	switch(led->mode)
 	{
-	case RATBAG_LED_BREATHING:
+	case GHOSTCAT_LED_BREATHING:
 		h_led.mode = HIDPP20_LED_MODE_BREATHING;
 		h_led.breathing.brightness = led->brightness;
 		h_led.breathing.period = led->ms;
 		h_led.breathing.timeout = 300;
 		break;
-	case RATBAG_LED_OFF:
+	case GHOSTCAT_LED_OFF:
 		h_led.mode = HIDPP20_LED_MODE_OFF;
 		h_led.on.index = HIDPP20_LED_SW_CONTROL_LED_INDEX_ALL;
 		break;
-	case RATBAG_LED_ON:
+	case GHOSTCAT_LED_ON:
 		h_led.mode = HIDPP20_LED_MODE_ON;
 		h_led.on.index = HIDPP20_LED_SW_CONTROL_LED_INDEX_ALL;
 		break;
-	case RATBAG_LED_CYCLE:
+	case GHOSTCAT_LED_CYCLE:
 		return -ENOTSUP;
 	}
 
@@ -682,11 +682,11 @@ hidpp20drv_update_led_1300(struct ratbag_led *led, struct hidpp20drv_data *data)
 	if (rc)
 		return rc;
 
-	return RATBAG_SUCCESS;
+	return GHOSTCAT_SUCCESS;
 }
 
 static int
-hidpp20drv_update_led_8070_8071(struct ratbag_led *led, struct ratbag_profile* profile,
+hidpp20drv_update_led_8070_8071(struct ghostcat_led *led, struct ghostcat_profile* profile,
 				struct hidpp20drv_data *drv_data)
 {
 	struct hidpp20_profile *h_profile;
@@ -708,13 +708,13 @@ hidpp20drv_update_led_8070_8071(struct ratbag_led *led, struct ratbag_profile* p
 		return -EINVAL;
 
 	switch (led->mode) {
-	case RATBAG_LED_ON:
+	case GHOSTCAT_LED_ON:
 		h_led->mode = HIDPP20_LED_ON;
 		break;
-	case RATBAG_LED_CYCLE:
+	case GHOSTCAT_LED_CYCLE:
 		h_led->mode = HIDPP20_LED_CYCLE;
 		break;
-	case RATBAG_LED_BREATHING:
+	case GHOSTCAT_LED_BREATHING:
 		h_led->mode = HIDPP20_LED_BREATHING;
 		break;
 	default:
@@ -734,15 +734,15 @@ hidpp20drv_update_led_8070_8071(struct ratbag_led *led, struct ratbag_profile* p
 								  h_led_val);
 	}
 
-	return RATBAG_SUCCESS;
+	return GHOSTCAT_SUCCESS;
 }
 
 static int
-hidpp20drv_update_led(struct ratbag_led *led)
+hidpp20drv_update_led(struct ghostcat_led *led)
 {
-	struct ratbag_profile *profile = led->profile;
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_profile *profile = led->profile;
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 
 	if ((drv_data->capabilities & HIDPP_CAP_COLOR_LED_EFFECTS_8070) |
 	    (drv_data->capabilities & HIDPP_CAP_RGB_EFFECTS_8071))
@@ -751,13 +751,13 @@ hidpp20drv_update_led(struct ratbag_led *led)
 	if (drv_data->capabilities & HIDPP_CAP_LED_SW_CONTROL_1300)
 		return hidpp20drv_update_led_1300(led, drv_data);
 
-	return RATBAG_ERROR_CAPABILITY;
+	return GHOSTCAT_ERROR_CAPABILITY;
 }
 
 static int
-hidpp20drv_set_current_profile(struct ratbag_device *device, unsigned int index)
+hidpp20drv_set_current_profile(struct ghostcat_device *device, unsigned int index)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data((struct ratbag_device *)device);
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data((struct ghostcat_device *)device);
 	struct hidpp20_profile *h_profile;
 	int rc;
 
@@ -779,10 +779,10 @@ hidpp20drv_set_current_profile(struct ratbag_device *device, unsigned int index)
 }
 
 static int
-hidpp20drv_read_resolution_dpi_2201(struct ratbag_device *device)
+hidpp20drv_read_resolution_dpi_2201(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag *ratbag = device->ratbag;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat *ratbag = device->ratbag;
 	int rc;
 
 	free(drv_data->sensors);
@@ -816,11 +816,11 @@ hidpp20drv_read_resolution_dpi_2201(struct ratbag_device *device)
 }
 
 static int
-hidpp20drv_read_report_rate_8060(struct ratbag_device *device)
+hidpp20drv_read_report_rate_8060(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag *ratbag = device->ratbag;
-	struct ratbag_profile *profile;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat *ratbag = device->ratbag;
+	struct ghostcat_profile *profile;
 	uint8_t bitflags_ms;
 	int nrates = 0;
 	int rc;
@@ -870,7 +870,7 @@ hidpp20drv_read_report_rate_8060(struct ratbag_device *device)
 
 		if (rate_hz) {
 			log_debug(ratbag, "report rate is %u\n", rate_hz);
-			ratbag_device_for_each_profile(device, profile)
+			ghostcat_device_for_each_profile(device, profile)
 				profile->hz = rate_hz;
 		}
 	}
@@ -881,12 +881,12 @@ hidpp20drv_read_report_rate_8060(struct ratbag_device *device)
 }
 
 static int
-hidpp20drv_read_resolution_dpi(struct ratbag_profile *profile)
+hidpp20drv_read_resolution_dpi(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
-	struct ratbag *ratbag = device->ratbag;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag_resolution *res;
+	struct ghostcat_device *device = profile->device;
+	struct ghostcat *ratbag = device->ratbag;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat_resolution *res;
 	unsigned int default_dpi = 1000;
 	unsigned int default_rate = 500;
 	int rc;
@@ -912,7 +912,7 @@ hidpp20drv_read_resolution_dpi(struct ratbag_profile *profile)
 		if (rc < 0)
 			return rc;
 
-		ratbag_profile_for_each_resolution(profile, res) {
+		ghostcat_profile_for_each_resolution(profile, res) {
 			struct hidpp20_sensor *sensor;
 
 			/* We only look at the first sensor. Multiple
@@ -920,8 +920,8 @@ hidpp20drv_read_resolution_dpi(struct ratbag_profile *profile)
 			sensor = &drv_data->sensors[0];
 
 			/* FIXME: retrieve the refresh rate */
-			ratbag_resolution_set_resolution(res, sensor->dpi, sensor->dpi);
-			ratbag_resolution_set_dpi_list_from_range(res,
+			ghostcat_resolution_set_resolution(res, sensor->dpi, sensor->dpi);
+			ghostcat_resolution_set_dpi_list_from_range(res,
 								  sensor->dpi_min,
 								  sensor->dpi_max);
 			/* FIXME: we mark all resolutions as active because
@@ -929,8 +929,8 @@ hidpp20drv_read_resolution_dpi(struct ratbag_profile *profile)
 			res->is_active = true;
 		}
 	} else {
-		ratbag_profile_for_each_resolution(profile, res)
-			ratbag_resolution_set_dpi_list(res, &default_dpi, 1);
+		ghostcat_profile_for_each_resolution(profile, res)
+			ghostcat_resolution_set_dpi_list(res, &default_dpi, 1);
 	}
 
 	if (drv_data->capabilities & HIDPP_CAP_ADJUSTABLE_REPORT_RATE_8060) {
@@ -938,23 +938,23 @@ hidpp20drv_read_resolution_dpi(struct ratbag_profile *profile)
 		if (rc < 0 && drv_data->report_rates[0] == 0)
 			return rc;
 
-		ratbag_profile_set_report_rate_list(profile,
+		ghostcat_profile_set_report_rate_list(profile,
 						    drv_data->report_rates,
 						    drv_data->num_report_rates);
 	} else {
-		ratbag_profile_set_report_rate_list(profile, &default_rate, 1);
+		ghostcat_profile_set_report_rate_list(profile, &default_rate, 1);
 	}
 
 	return 0;
 }
 
 static int
-hidpp20drv_update_resolution_dpi_8100(struct ratbag_resolution *resolution,
+hidpp20drv_update_resolution_dpi_8100(struct ghostcat_resolution *resolution,
 				      int dpi_x, int dpi_y)
 {
-	struct ratbag_profile *profile = resolution->profile;
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_profile *profile = resolution->profile;
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_profile *h_profile;
 	int dpi = dpi_x; /* dpi_x == dpi_y if we don't have the individual resolution cap */
 
@@ -964,22 +964,22 @@ hidpp20drv_update_resolution_dpi_8100(struct ratbag_resolution *resolution,
 	if (resolution->is_default)
 		h_profile->default_dpi = resolution->index;
 
-	return RATBAG_SUCCESS;
+	return GHOSTCAT_SUCCESS;
 }
 
 static int
-hidpp20drv_update_resolution_dpi(struct ratbag_resolution *resolution,
+hidpp20drv_update_resolution_dpi(struct ghostcat_resolution *resolution,
 				 int dpi_x, int dpi_y)
 {
-	struct ratbag_profile *profile = resolution->profile;
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_profile *profile = resolution->profile;
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_sensor *sensor;
 	int i;
 	int dpi = dpi_x; /* dpi_x == dpi_y if we don't have the individual resolution cap */
 
 	if (resolution->is_disabled) {
-		if (!ratbag_resolution_has_capability(resolution, RATBAG_RESOLUTION_CAP_DISABLE))
+		if (!ghostcat_resolution_has_capability(resolution, GHOSTCAT_RESOLUTION_CAP_DISABLE))
 			return -ENOTSUP;
 
 		dpi = dpi_x = dpi_y = 0;
@@ -1021,37 +1021,37 @@ hidpp20drv_update_resolution_dpi(struct ratbag_resolution *resolution,
 }
 
 static int
-hidpp20drv_update_report_rate_8060(struct ratbag_profile *profile, int hz)
+hidpp20drv_update_report_rate_8060(struct ghostcat_profile *profile, int hz)
 {
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	int rc;
 
 	rc = hidpp20_adjustable_report_rate_set_report_rate(drv_data->dev, 1000/hz);
 	if (rc)
 		return rc;
 
-	return RATBAG_SUCCESS;
+	return GHOSTCAT_SUCCESS;
 }
 
 static int
-hidpp20drv_update_report_rate_8100(struct ratbag_profile *profile, int hz)
+hidpp20drv_update_report_rate_8100(struct ghostcat_profile *profile, int hz)
 {
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_profile *h_profile;
 
 	h_profile = &drv_data->profiles->profiles[profile->index];
 	h_profile->report_rate = hz;
 
-	return RATBAG_SUCCESS;
+	return GHOSTCAT_SUCCESS;
 }
 
 static int
-hidpp20drv_update_report_rate(struct ratbag_profile *profile, int hz)
+hidpp20drv_update_report_rate(struct ghostcat_profile *profile, int hz)
 {
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	int rc;
 
 	if (drv_data->capabilities & HIDPP_CAP_ONBOARD_PROFILES_8100)
@@ -1071,9 +1071,9 @@ hidpp20drv_update_report_rate(struct ratbag_profile *profile, int hz)
 }
 
 static int
-hidpp20drv_read_special_key_mouse(struct ratbag_device *device)
+hidpp20drv_read_special_key_mouse(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	int rc;
 
 	if (!(drv_data->capabilities & HIDPP_CAP_BUTTON_KEY_1b04))
@@ -1093,9 +1093,9 @@ hidpp20drv_read_special_key_mouse(struct ratbag_device *device)
 }
 
 static int
-hidpp20drv_read_kbd_reprogrammable_key(struct ratbag_device *device)
+hidpp20drv_read_kbd_reprogrammable_key(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	int rc;
 
 	if (!(drv_data->capabilities & HIDPP_CAP_KBD_REPROGRAMMABLE_KEYS_1b00))
@@ -1152,9 +1152,9 @@ hidpp20drv_read_color_leds_8071(struct hidpp20drv_data *drv_data)
 }
 
 static int
-hidpp20drv_read_color_leds(struct ratbag_device *device)
+hidpp20drv_read_color_leds(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 
 	if(drv_data->capabilities & HIDPP_CAP_COLOR_LED_EFFECTS_8070)
 		return hidpp20drv_read_color_leds_8070(drv_data);
@@ -1165,9 +1165,9 @@ hidpp20drv_read_color_leds(struct ratbag_device *device)
 }
 
 static int
-hidpp20drv_read_leds(struct ratbag_device *device)
+hidpp20drv_read_leds(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	int rc;
 
 	if (!(drv_data->capabilities & HIDPP_CAP_LED_SW_CONTROL_1300))
@@ -1186,11 +1186,11 @@ hidpp20drv_read_leds(struct ratbag_device *device)
 }
 
 static void
-hidpp20drv_read_profile_8100(struct ratbag_profile *profile)
+hidpp20drv_read_profile_8100(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag_resolution *res;
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat_resolution *res;
 	struct hidpp20_profile *p;
 	int dpi_index = 0xff;
 	int dpi;
@@ -1209,7 +1209,7 @@ hidpp20drv_read_profile_8100(struct ratbag_profile *profile)
 	if (dpi_index < 0 || dpi_index > 4)
 		dpi_index = p->default_dpi;
 
-	ratbag_profile_for_each_resolution(profile, res) {
+	ghostcat_profile_for_each_resolution(profile, res) {
 		struct hidpp20_sensor *sensor;
 
 		/* We only look at the first sensor. Multiple
@@ -1224,7 +1224,7 @@ hidpp20drv_read_profile_8100(struct ratbag_profile *profile)
 			res->is_disabled = true;
 			dpi = sensor->dpi_min;
 		}
-		ratbag_resolution_set_resolution(res, dpi, dpi);
+		ghostcat_resolution_set_resolution(res, dpi, dpi);
 
 		if (profile->is_active &&
 		    res->index == (unsigned int)dpi_index)
@@ -1234,22 +1234,22 @@ hidpp20drv_read_profile_8100(struct ratbag_profile *profile)
 		if (res->index == p->switched_dpi)
 			res->is_dpi_shift_target = true;
 
-		ratbag_resolution_set_dpi_list_from_range(res,
+		ghostcat_resolution_set_dpi_list_from_range(res,
 							  sensor->dpi_min,
 							  sensor->dpi_max);
 	}
 
-	ratbag_profile_set_report_rate_list(profile,
+	ghostcat_profile_set_report_rate_list(profile,
 					    drv_data->report_rates,
 					    drv_data->num_report_rates);
 	profile->hz = p->report_rate;
 }
 
 static int
-hidpp20drv_init_leds_8070_8071(struct ratbag_device *device)
+hidpp20drv_init_leds_8070_8071(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag *ratbag = device->ratbag;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat *ratbag = device->ratbag;
 
 	/* we only support 0x8071 via 0x8100 */
 	if (!(drv_data->capabilities & HIDPP_CAP_ONBOARD_PROFILES_8100) &&
@@ -1272,10 +1272,10 @@ hidpp20drv_init_leds_8070_8071(struct ratbag_device *device)
 }
 
 static int
-hidpp20drv_init_profile_8100(struct ratbag_device *device)
+hidpp20drv_init_profile_8100(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag *ratbag = device->ratbag;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat *ratbag = device->ratbag;
 	int rc;
 
 	log_debug(ratbag, "initializing onboard profiles\n");
@@ -1300,20 +1300,20 @@ hidpp20drv_init_profile_8100(struct ratbag_device *device)
 }
 
 static void
-hidpp20drv_read_profile(struct ratbag_profile *profile)
+hidpp20drv_read_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag_resolution *resolution;
-	struct ratbag_led *led;
-	struct ratbag_button *button;
+	struct ghostcat_device *device = profile->device;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_led *led;
+	struct ghostcat_button *button;
 
 	if (drv_data->capabilities & HIDPP_CAP_ONBOARD_PROFILES_8100) {
 		hidpp20drv_read_profile_8100(profile);
-		ratbag_profile_set_cap(profile, RATBAG_PROFILE_CAP_DISABLE);
+		ghostcat_profile_set_cap(profile, GHOSTCAT_PROFILE_CAP_DISABLE);
 
-		ratbag_profile_for_each_resolution(profile, resolution) {
-			ratbag_resolution_set_cap(resolution, RATBAG_RESOLUTION_CAP_DISABLE);
+		ghostcat_profile_for_each_resolution(profile, resolution) {
+			ghostcat_resolution_set_cap(resolution, GHOSTCAT_RESOLUTION_CAP_DISABLE);
 		}
 	} else {
 		hidpp20drv_read_resolution_dpi(profile);
@@ -1322,18 +1322,18 @@ hidpp20drv_read_profile(struct ratbag_profile *profile)
 		profile->is_active = (profile->index == 0);
 	}
 
-	ratbag_profile_for_each_led(profile, led)
+	ghostcat_profile_for_each_led(profile, led)
 		hidpp20drv_read_led(led);
 
-	ratbag_profile_for_each_button(profile, button)
+	ghostcat_profile_for_each_button(profile, button)
 		hidpp20drv_read_button(button);
 }
 
 static int
-hidpp20drv_init_feature(struct ratbag_device *device, uint16_t feature)
+hidpp20drv_init_feature(struct ghostcat_device *device, uint16_t feature)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag *ratbag = device->ratbag;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat *ratbag = device->ratbag;
 	int rc;
 	uint8_t feature_index, feature_type, feature_version;
 
@@ -1433,7 +1433,7 @@ hidpp20drv_init_feature(struct ratbag_device *device, uint16_t feature)
 	case HIDPP_PAGE_COLOR_LED_EFFECTS: {
 		/* The 8070 feature implemented in the G602 doesn't follow the spec,
 		 * so we ignore it */
-		if (ratbag_device_data_hidpp20_get_quirk(device->data) == HIDPP20_QUIRK_G602)
+		if (ghostcat_device_data_hidpp20_get_quirk(device->data) == HIDPP20_QUIRK_G602)
 			break;
 
 		log_debug(ratbag, "device has color effects\n");
@@ -1473,13 +1473,13 @@ hidpp20drv_init_feature(struct ratbag_device *device, uint16_t feature)
 }
 
 static int
-hidpp20drv_commit(struct ratbag_device *device)
+hidpp20drv_commit(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag_profile *profile;
-	struct ratbag_button *button;
-	struct ratbag_led *led;
-	struct ratbag_resolution *resolution;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat_profile *profile;
+	struct ghostcat_button *button;
+	struct ghostcat_led *led;
+	struct ghostcat_resolution *resolution;
 	int rc;
 
 	list_for_each(profile, &device->profiles, link) {
@@ -1490,17 +1490,17 @@ hidpp20drv_commit(struct ratbag_device *device)
 			rc = hidpp20drv_update_report_rate(profile, profile->hz);
 			if (rc) {
 				log_error(device->ratbag, "hidpp20: failed to update report rate (%d)\n", rc);
-				return RATBAG_ERROR_DEVICE;
+				return GHOSTCAT_ERROR_DEVICE;
 			}
 		}
 
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			rc = hidpp20drv_update_resolution_dpi(resolution,
 							      resolution->dpi_x,
 							      resolution->dpi_y);
 			if (rc) {
 				log_error(device->ratbag, "hidpp20: failed to update resolution (%d)\n", rc);
-				return RATBAG_ERROR_DEVICE;
+				return GHOSTCAT_ERROR_DEVICE;
 			}
 		}
 
@@ -1511,7 +1511,7 @@ hidpp20drv_commit(struct ratbag_device *device)
 			rc = hidpp20drv_update_button(button);
 			if (rc) {
 				log_error(device->ratbag, "hidpp20: failed to update button (%d)\n", rc);
-				return RATBAG_ERROR_DEVICE;
+				return GHOSTCAT_ERROR_DEVICE;
 			}
 		}
 
@@ -1522,7 +1522,7 @@ hidpp20drv_commit(struct ratbag_device *device)
 			rc = hidpp20drv_update_led(led);
 			if (rc) {
 				log_error(device->ratbag, "hidpp20: failed to update led (%d)\n", rc);
-				return RATBAG_ERROR_DEVICE;
+				return GHOSTCAT_ERROR_DEVICE;
 			}
 		}
 	}
@@ -1535,12 +1535,12 @@ hidpp20drv_commit(struct ratbag_device *device)
 						     drv_data->profiles);
 		if (rc) {
 			log_error(device->ratbag, "hidpp20: failed to commit profile (%d)\n", rc);
-			return RATBAG_ERROR_DEVICE;
+			return GHOSTCAT_ERROR_DEVICE;
 		}
 
 		list_for_each(profile, &device->profiles, link) {
 			if (profile->is_active) {
-				ratbag_profile_for_each_resolution(profile, resolution) {
+				ghostcat_profile_for_each_resolution(profile, resolution) {
 					if (resolution->is_active)
 						hidpp20_onboard_profiles_set_current_dpi_index(drv_data->dev,
 											       resolution->index);
@@ -1549,13 +1549,13 @@ hidpp20drv_commit(struct ratbag_device *device)
 		}
 	}
 
-	return RATBAG_SUCCESS;
+	return GHOSTCAT_SUCCESS;
 }
 
 static int
-hidpp20drv_20_probe(struct ratbag_device *device)
+hidpp20drv_20_probe(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
 	struct hidpp20_device *dev = drv_data->dev;
 	struct hidpp20_feature *feature_list = dev->feature_list;
 	unsigned int i;
@@ -1563,7 +1563,7 @@ hidpp20drv_20_probe(struct ratbag_device *device)
 
 	log_raw(device->ratbag,
 		"'%s' has %d features\n",
-		ratbag_device_get_name(device),
+		ghostcat_device_get_name(device),
 		dev->feature_count);
 
 	for (i = 0; i < dev->feature_count; i++) {
@@ -1593,30 +1593,30 @@ hidpp20drv_20_probe(struct ratbag_device *device)
 }
 
 static int
-hidpp20drv_test_hidraw(struct ratbag_device *device)
+hidpp20drv_test_hidraw(struct ghostcat_device *device)
 {
-	return ratbag_hidraw_has_report(device, REPORT_ID_LONG);
+	return ghostcat_hidraw_has_report(device, REPORT_ID_LONG);
 }
 
 static void
 hidpp20_log(void *userdata, enum hidpp_log_priority priority, const char *format, va_list args)
 {
-	struct ratbag_device *device = userdata;
+	struct ghostcat_device *device = userdata;
 
-	log_msg_va(device->ratbag, (enum ratbag_log_priority)priority, format, args);
+	log_msg_va(device->ratbag, (enum ghostcat_log_priority)priority, format, args);
 }
 
 static void
-hidpp20drv_remove(struct ratbag_device *device)
+hidpp20drv_remove(struct ghostcat_device *device)
 {
 	struct hidpp20drv_data *drv_data;
 
 	if (!device)
 		return;
 
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 
-	ratbag_close_hidraw(device);
+	ghostcat_close_hidraw(device);
 
 	if (drv_data->profiles)
 		hidpp20_onboard_profiles_destroy(drv_data->profiles);
@@ -1630,32 +1630,32 @@ hidpp20drv_remove(struct ratbag_device *device)
 }
 
 static void
-hidpp20drv_init_device(struct ratbag_device *device,
+hidpp20drv_init_device(struct ghostcat_device *device,
 		       struct hidpp20drv_data *drv_data)
 {
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	bool active_profile = false;
 	int num;
 
-	num = ratbag_device_data_hidpp20_get_led_count(device->data);
+	num = ghostcat_device_data_hidpp20_get_led_count(device->data);
 	if (num >= 0)
 		drv_data->num_leds = num;
 
-	num = ratbag_device_data_hidpp20_get_button_count(device->data);
+	num = ghostcat_device_data_hidpp20_get_button_count(device->data);
 	if (num >= 0)
 		drv_data->num_buttons = num;
 
-	num = ratbag_device_data_hidpp20_get_report_rate(device->data);
+	num = ghostcat_device_data_hidpp20_get_report_rate(device->data);
 	if (num >= 0)
 		drv_data->report_rates[0] = num;
 
-	ratbag_device_init_profiles(device,
+	ghostcat_device_init_profiles(device,
 				    drv_data->num_profiles,
 				    drv_data->num_resolutions,
 				    drv_data->num_buttons,
 				    drv_data->num_leds);
 
-	ratbag_device_for_each_profile(device, profile)
+	ghostcat_device_for_each_profile(device, profile)
 		hidpp20drv_read_profile(profile);
 
 	if (drv_data->capabilities & HIDPP_CAP_ONBOARD_PROFILES_8100) {
@@ -1665,14 +1665,14 @@ hidpp20drv_init_device(struct ratbag_device *device,
 				active_profile = true;
 
 		if (!active_profile && device->num_profiles >= 1) {
-			profile = ratbag_device_get_profile(device, 0);
+			profile = ghostcat_device_get_profile(device, 0);
 			profile->is_active = true;
 		}
 	}
 }
 
 static int
-hidpp20drv_probe(struct ratbag_device *device)
+hidpp20drv_probe(struct ghostcat_device *device)
 {
 	int rc;
 	struct hidpp20drv_data *drv_data;
@@ -1680,16 +1680,16 @@ hidpp20drv_probe(struct ratbag_device *device)
 	struct hidpp20_device *dev;
 	int device_idx = HIDPP_RECEIVER_IDX;
 
-	rc = ratbag_find_hidraw(device, hidpp20drv_test_hidraw);
+	rc = ghostcat_find_hidraw(device, hidpp20drv_test_hidraw);
 	if (rc)
 		return rc;
 
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 	hidpp_device_init(&base, device->hidraw[0].fd);
 	hidpp_device_set_log_handler(&base, hidpp20_log, HIDPP_LOG_PRIORITY_RAW, device);
 
-	device_idx = ratbag_device_data_hidpp20_get_index(device->data);
+	device_idx = ghostcat_device_data_hidpp20_get_index(device->data);
 	if (device_idx == -1)
 		device_idx = HIDPP_RECEIVER_IDX;
 
@@ -1707,14 +1707,14 @@ hidpp20drv_probe(struct ratbag_device *device)
 		goto err;
 	}
 
-	dev->quirk = ratbag_device_data_hidpp20_get_quirk(device->data);
+	dev->quirk = ghostcat_device_data_hidpp20_get_quirk(device->data);
 
 	drv_data->dev = dev;
 
-	log_debug(device->ratbag, "'%s' is using protocol v%d.%d\n", ratbag_device_get_name(device), dev->proto_major, dev->proto_minor);
+	log_debug(device->ratbag, "'%s' is using protocol v%d.%d\n", ghostcat_device_get_name(device), dev->proto_major, dev->proto_minor);
 
 	if(dev->quirk != HIDPP20_QUIRK_NONE)
-		log_debug(device->ratbag, "'%s' is quirked (%s)\n", ratbag_device_get_name(device), hidpp20_get_quirk_string(dev->quirk));
+		log_debug(device->ratbag, "'%s' is quirked (%s)\n", ghostcat_device_get_name(device), hidpp20_get_quirk_string(dev->quirk));
 
 	/* add some defaults that will be overwritten by the device */
 	drv_data->num_profiles = 1;
@@ -1735,11 +1735,11 @@ err:
 }
 
 static int
-hidpp20drv_refresh_active_resolution(struct ratbag_device *device)
+hidpp20drv_refresh_active_resolution(struct ghostcat_device *device)
 {
-	struct hidpp20drv_data *drv_data = ratbag_get_drv_data(device);
-	struct ratbag_profile *profile;
-	struct ratbag_resolution *res;
+	struct hidpp20drv_data *drv_data = ghostcat_get_drv_data(device);
+	struct ghostcat_profile *profile;
+	struct ghostcat_resolution *res;
 	int dpi_index;
 	int changed = 0;
 
@@ -1757,7 +1757,7 @@ hidpp20drv_refresh_active_resolution(struct ratbag_device *device)
 			return 0; /* Can't determine, no change */
 
 		/* Update is_active flags if they differ */
-		ratbag_profile_for_each_resolution(profile, res) {
+		ghostcat_profile_for_each_resolution(profile, res) {
 			bool should_be_active = (res->index == (unsigned int)dpi_index);
 			if (res->is_active != should_be_active) {
 				res->is_active = should_be_active;
@@ -1770,7 +1770,7 @@ hidpp20drv_refresh_active_resolution(struct ratbag_device *device)
 	return changed;
 }
 
-struct ratbag_driver hidpp20_driver = {
+struct ghostcat_driver hidpp20_driver = {
 	.name = "Logitech HID++2.0",
 	.id = "hidpp20",
 	.probe = hidpp20drv_probe,

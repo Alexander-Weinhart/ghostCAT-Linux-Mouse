@@ -30,8 +30,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
 
 #define ETEKCITY_PROFILE_MAX			4
 #define ETEKCITY_BUTTON_MAX			10
@@ -152,28 +152,28 @@ print_key(uint8_t key)
 
 struct etekcity_button_mapping {
 	uint8_t raw;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 static struct etekcity_button_mapping etekcity_button_mapping[] = {
 	{ 1, BUTTON_ACTION_BUTTON(1) },
 	{ 2, BUTTON_ACTION_BUTTON(2) },
 	{ 3, BUTTON_ACTION_BUTTON(3) },
-	{ 4, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_DOUBLECLICK) },
+	{ 4, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_DOUBLECLICK) },
 	{ 6, BUTTON_ACTION_NONE },
 	{ 7, BUTTON_ACTION_BUTTON(4) },
 	{ 8, BUTTON_ACTION_BUTTON(5) },
-	{ 9, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP) },
-	{ 10, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN) },
-	{ 11, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_LEFT) },
-	{ 12, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT) },
-	{ 13, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
-	{ 14, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
-	{ 15, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
+	{ 9, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP) },
+	{ 10, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN) },
+	{ 11, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_LEFT) },
+	{ 12, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT) },
+	{ 13, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
+	{ 14, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
+	{ 15, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
 	{ 16, BUTTON_ACTION_MACRO },
-	{ 18, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
-	{ 19, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_UP) },
-	{ 20, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_DOWN) },
+	{ 18, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
+	{ 19, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_UP) },
+	{ 20, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_DOWN) },
 	{ 25, BUTTON_ACTION_KEY(KEY_CONFIG) },
 	{ 26, BUTTON_ACTION_KEY(KEY_PREVIOUSSONG) },
 	{ 27, BUTTON_ACTION_KEY(KEY_NEXTSONG) },
@@ -194,7 +194,7 @@ static struct etekcity_button_mapping etekcity_button_mapping[] = {
 	{ 42, BUTTON_ACTION_KEY(KEY_SEARCH) },
 };
 
-static const struct ratbag_button_action*
+static const struct ghostcat_button_action*
 etekcity_raw_to_button_action(uint8_t data)
 {
 	struct etekcity_button_mapping *mapping;
@@ -208,12 +208,12 @@ etekcity_raw_to_button_action(uint8_t data)
 }
 
 static uint8_t
-etekcity_button_action_to_raw(const struct ratbag_button_action *action)
+etekcity_button_action_to_raw(const struct ghostcat_button_action *action)
 {
 	struct etekcity_button_mapping *mapping;
 
 	ARRAY_FOR_EACH(etekcity_button_mapping, mapping) {
-		if (ratbag_button_action_match(&mapping->action, action))
+		if (ghostcat_button_action_match(&mapping->action, action))
 			return mapping->raw;
 	}
 
@@ -221,12 +221,12 @@ etekcity_button_action_to_raw(const struct ratbag_button_action *action)
 }
 
 static int
-etekcity_current_profile(struct ratbag_device *device)
+etekcity_current_profile(struct ghostcat_device *device)
 {
 	uint8_t buf[3];
 	int ret;
 
-	ret = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_PROFILE, buf,
+	ret = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_PROFILE, buf,
 			sizeof(buf), HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 	if (ret < 0)
 		return ret;
@@ -238,7 +238,7 @@ etekcity_current_profile(struct ratbag_device *device)
 }
 
 static int
-etekcity_set_current_profile(struct ratbag_device *device, unsigned int index)
+etekcity_set_current_profile(struct ghostcat_device *device, unsigned int index)
 {
 	uint8_t buf[] = {ETEKCITY_REPORT_ID_PROFILE, 0x03, index};
 	int ret;
@@ -246,7 +246,7 @@ etekcity_set_current_profile(struct ratbag_device *device, unsigned int index)
 	if (index > ETEKCITY_PROFILE_MAX)
 		return -EINVAL;
 
-	ret = ratbag_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
+	ret = ghostcat_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
 			HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
 	msleep(100);
@@ -255,7 +255,7 @@ etekcity_set_current_profile(struct ratbag_device *device, unsigned int index)
 }
 
 static int
-etekcity_set_config_profile(struct ratbag_device *device, uint8_t profile, uint8_t type)
+etekcity_set_config_profile(struct ghostcat_device *device, uint8_t profile, uint8_t type)
 {
 	uint8_t buf[] = {ETEKCITY_REPORT_ID_CONFIGURE_PROFILE, profile, type};
 	int ret;
@@ -263,7 +263,7 @@ etekcity_set_config_profile(struct ratbag_device *device, uint8_t profile, uint8
 	if (profile > ETEKCITY_PROFILE_MAX)
 		return -EINVAL;
 
-	ret = ratbag_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
+	ret = ghostcat_hidraw_raw_request(device, buf[0], buf, sizeof(buf),
 				 HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
 	msleep(100);
@@ -277,12 +277,12 @@ etekcity_button_to_index(unsigned button)
 	return button < 8 ? button : button + 5;
 }
 
-static const struct ratbag_button_action *
-etekcity_button_to_action(struct ratbag_profile *profile,
+static const struct ghostcat_button_action *
+etekcity_button_to_action(struct ghostcat_profile *profile,
 			  unsigned int button_index)
 {
-	struct ratbag_device *device = profile->device;
-	struct etekcity_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = profile->device;
+	struct etekcity_data *drv_data = ghostcat_get_drv_data(device);
 	uint8_t data;
 	unsigned raw_index = etekcity_button_to_index(button_index);
 
@@ -294,9 +294,9 @@ etekcity_button_to_action(struct ratbag_profile *profile,
 }
 
 static int
-etekcity_write_profile(struct ratbag_profile *profile)
+etekcity_write_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	unsigned int index = profile->index;
 	struct etekcity_data *drv_data;
 	int rc;
@@ -304,11 +304,11 @@ etekcity_write_profile(struct ratbag_profile *profile)
 
 	assert(index <= ETEKCITY_PROFILE_MAX);
 
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 	buf = drv_data->profiles[index];
 
 	etekcity_set_config_profile(device, index, ETEKCITY_CONFIG_KEY_MAPPING);
-	rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_KEY_MAPPING,
+	rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_KEY_MAPPING,
 			buf, ETEKCITY_REPORT_SIZE_PROFILE,
 			HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
@@ -324,11 +324,11 @@ etekcity_write_profile(struct ratbag_profile *profile)
 }
 
 static void
-etekcity_read_button(struct ratbag_button *button)
+etekcity_read_button(struct ghostcat_button *button)
 {
-	const struct ratbag_button_action *action;
-	struct ratbag_device *device;
-	struct ratbag_button_macro *m;
+	const struct ghostcat_button_action *action;
+	struct ghostcat_device *device;
+	struct ghostcat_button_macro *m;
 	struct etekcity_macro *macro;
 	struct etekcity_data *drv_data;
 	uint8_t *buf;
@@ -337,23 +337,23 @@ etekcity_read_button(struct ratbag_button *button)
 
 	action = etekcity_button_to_action(button->profile, button->index);
 	if (action)
-		ratbag_button_set_action(button, action);
+		ghostcat_button_set_action(button, action);
 
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_NONE);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_MACRO);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_NONE);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_MACRO);
 
-	if (action && action->type == RATBAG_BUTTON_ACTION_TYPE_MACRO) {
+	if (action && action->type == GHOSTCAT_BUTTON_ACTION_TYPE_MACRO) {
 		device = button->profile->device;
-		drv_data = ratbag_get_drv_data(device);
+		drv_data = ghostcat_get_drv_data(device);
 
 		etekcity_set_config_profile(device,
 					    button->profile->index,
 					    button->index);
 		macro = &drv_data->macros[button->profile->index][button->index];
 		buf = (uint8_t*)macro;
-		rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_MACRO,
+		rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_MACRO,
 				buf, ETEKCITY_REPORT_SIZE_MACRO,
 				HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 		if (rc != ETEKCITY_REPORT_SIZE_MACRO) {
@@ -362,37 +362,37 @@ etekcity_read_button(struct ratbag_button *button)
 				  button->index, button->profile->index,
 				  rc < 0 ? strerror(-rc) : "not read enough", rc);
 		} else {
-			m = ratbag_button_macro_new(macro->name);
+			m = ghostcat_button_macro_new(macro->name);
 			log_raw(device->ratbag,
 				"macro on button %d of profile %d is named '%s', and contains %d events:\n",
 				button->index, button->profile->index,
 				macro->name, macro->length);
 			for (j = 0; j < macro->length; j++) {
-				unsigned int keycode = ratbag_hidraw_get_keycode_from_keyboard_usage(device,
+				unsigned int keycode = ghostcat_hidraw_get_keycode_from_keyboard_usage(device,
 								macro->keys[j].keycode);
-				ratbag_button_macro_set_event(m,
+				ghostcat_button_macro_set_event(m,
 							      j,
-							      macro->keys[j].flag & 0x80 ? RATBAG_MACRO_EVENT_KEY_RELEASED : RATBAG_MACRO_EVENT_KEY_PRESSED,
+							      macro->keys[j].flag & 0x80 ? GHOSTCAT_MACRO_EVENT_KEY_RELEASED : GHOSTCAT_MACRO_EVENT_KEY_PRESSED,
 							      keycode);
 				log_raw(device->ratbag,
 					"    - %s %s\n",
 					libevdev_event_code_get_name(EV_KEY, keycode),
 					macro->keys[j].flag & 0x80 ? "released" : "pressed");
 			}
-			ratbag_button_copy_macro(button, m);
-			ratbag_button_macro_unref(m);
+			ghostcat_button_copy_macro(button, m);
+			ghostcat_button_macro_unref(m);
 		}
 		msleep(10);
 	}
 }
 
 static void
-etekcity_read_profile(struct ratbag_profile *profile)
+etekcity_read_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct etekcity_data *drv_data;
-	struct ratbag_resolution *resolution;
-	struct ratbag_button *button;
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_button *button;
 	struct etekcity_settings_report *setting_report;
 	uint8_t *buf;
 	unsigned int report_rate;
@@ -402,12 +402,12 @@ etekcity_read_profile(struct ratbag_profile *profile)
 
 	assert(profile->index <= ETEKCITY_PROFILE_MAX);
 
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 
 	setting_report = &drv_data->settings[profile->index];
 	buf = (uint8_t*)setting_report;
 	etekcity_set_config_profile(device, profile->index, ETEKCITY_CONFIG_SETTINGS);
-	rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_SETTINGS,
+	rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_SETTINGS,
 			buf, ETEKCITY_REPORT_SIZE_SETTINGS,
 			HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 
@@ -424,11 +424,11 @@ etekcity_read_profile(struct ratbag_profile *profile)
 		report_rate = 0;
 	}
 
-	ratbag_profile_set_report_rate_list(profile, report_rates,
+	ghostcat_profile_set_report_rate_list(profile, report_rates,
 					    ARRAY_LENGTH(report_rates));
 	profile->hz = report_rate;
 
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		dpi_x = setting_report->xres[resolution->index] * 50;
 		dpi_y = setting_report->yres[resolution->index] * 50;
 		if (!(setting_report->dpi_mask & (1 << resolution->index))) {
@@ -437,19 +437,19 @@ etekcity_read_profile(struct ratbag_profile *profile)
 			dpi_y = 0;
 		}
 
-		ratbag_resolution_set_resolution(resolution, dpi_x, dpi_y);
-		ratbag_resolution_set_cap(resolution,
-					  RATBAG_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
+		ghostcat_resolution_set_resolution(resolution, dpi_x, dpi_y);
+		ghostcat_resolution_set_cap(resolution,
+					  GHOSTCAT_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
 		resolution->is_active = (resolution->index == setting_report->current_dpi);
 
 	}
 
-	ratbag_profile_for_each_button(profile, button)
+	ghostcat_profile_for_each_button(profile, button)
 		etekcity_read_button(button);
 
 	buf = drv_data->profiles[profile->index];
 	etekcity_set_config_profile(device, profile->index, ETEKCITY_CONFIG_KEY_MAPPING);
-	rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_KEY_MAPPING,
+	rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_KEY_MAPPING,
 			buf, ETEKCITY_REPORT_SIZE_PROFILE,
 			HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 
@@ -464,38 +464,38 @@ etekcity_read_profile(struct ratbag_profile *profile)
 }
 
 static int
-etekcity_write_macro(struct ratbag_button *button)
+etekcity_write_macro(struct ghostcat_button *button)
 {
-	const struct ratbag_button_action *action = &button->action;
-	struct ratbag_device *device;
+	const struct ghostcat_button_action *action = &button->action;
+	struct ghostcat_device *device;
 	struct etekcity_macro *macro;
 	struct etekcity_data *drv_data;
 	uint8_t *buf;
 	unsigned i, count = 0;
 	int rc;
 
-	if (action->type != RATBAG_BUTTON_ACTION_TYPE_MACRO)
+	if (action->type != GHOSTCAT_BUTTON_ACTION_TYPE_MACRO)
 		return 0;
 
 	device = button->profile->device;
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 	macro = &drv_data->macros[button->profile->index][button->index];
 	buf = (uint8_t*)macro;
 
 	for (i = 0; i < MAX_MACRO_EVENTS && count < ETEKCITY_MAX_MACRO_LENGTH; i++) {
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_INVALID)
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_INVALID)
 			return -EINVAL; /* should not happen, ever */
 
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_NONE)
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_NONE)
 			break;
 
 		/* ignore timeout events */
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_WAIT)
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_WAIT)
 			continue;
 
-		macro->keys[count].keycode = ratbag_hidraw_get_keyboard_usage_from_keycode(device,
+		macro->keys[count].keycode = ghostcat_hidraw_get_keyboard_usage_from_keycode(device,
 											   action->macro->events[i].event.key);
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_KEY_PRESSED)
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_KEY_PRESSED)
 			macro->keys[count].flag = 0x00;
 		else
 			macro->keys[count].flag = 0x80;
@@ -513,7 +513,7 @@ etekcity_write_macro(struct ratbag_button *button)
 	etekcity_set_config_profile(device,
 				    button->profile->index,
 				    button->index);
-	rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_MACRO,
+	rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_MACRO,
 		buf, ETEKCITY_REPORT_SIZE_MACRO,
 		HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 	if (rc < 0)
@@ -523,12 +523,12 @@ etekcity_write_macro(struct ratbag_button *button)
 }
 
 static int
-etekcity_write_button(struct ratbag_button *button)
+etekcity_write_button(struct ghostcat_button *button)
 {
-	const struct ratbag_button_action *action = &button->action;
-	struct ratbag_profile *profile = button->profile;
-	struct ratbag_device *device = profile->device;
-	struct etekcity_data *drv_data = ratbag_get_drv_data(device);
+	const struct ghostcat_button_action *action = &button->action;
+	struct ghostcat_profile *profile = button->profile;
+	struct ghostcat_device *device = profile->device;
+	struct etekcity_data *drv_data = ghostcat_get_drv_data(device);
 	uint8_t rc, *data;
 	unsigned index = etekcity_button_to_index(button->index);
 
@@ -552,11 +552,11 @@ etekcity_write_button(struct ratbag_button *button)
 }
 
 static int
-etekcity_write_resolution(struct ratbag_resolution *resolution)
+etekcity_write_resolution(struct ghostcat_resolution *resolution)
 {
-	struct ratbag_profile *profile = resolution->profile;
-	struct ratbag_device *device = profile->device;
-	struct etekcity_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_profile *profile = resolution->profile;
+	struct ghostcat_device *device = profile->device;
+	struct etekcity_data *drv_data = ghostcat_get_drv_data(device);
 	struct etekcity_settings_report *settings_report;
 	uint8_t *buf;
 	int rc;
@@ -578,7 +578,7 @@ etekcity_write_resolution(struct ratbag_resolution *resolution)
 
 	buf = (uint8_t*)settings_report;
 	etekcity_set_config_profile(device, profile->index, ETEKCITY_CONFIG_SETTINGS);
-	rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_SETTINGS,
+	rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_SETTINGS,
 				       buf, ETEKCITY_REPORT_SIZE_SETTINGS,
 				       HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
 
@@ -592,27 +592,27 @@ etekcity_write_resolution(struct ratbag_resolution *resolution)
 }
 
 static int
-etekcity_probe(struct ratbag_device *device)
+etekcity_probe(struct ghostcat_device *device)
 {
 	int rc;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	struct etekcity_data *drv_data;
 	int active_idx;
 
-	rc = ratbag_open_hidraw(device);
+	rc = ghostcat_open_hidraw(device);
 	if (rc)
 		return rc;
 
-	if (!ratbag_hidraw_has_report(device, ETEKCITY_REPORT_ID_KEY_MAPPING)) {
-		ratbag_close_hidraw(device);
+	if (!ghostcat_hidraw_has_report(device, ETEKCITY_REPORT_ID_KEY_MAPPING)) {
+		ghostcat_close_hidraw(device);
 		return -ENODEV;
 	}
 
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 
 	/* retrieve the "on-to-go" speed setting */
-	rc = ratbag_hidraw_raw_request(device, ETEKCITY_REPORT_ID_SPEED_SETTING,
+	rc = ghostcat_hidraw_raw_request(device, ETEKCITY_REPORT_ID_SPEED_SETTING,
 			drv_data->speed_setting, ETEKCITY_REPORT_SIZE_SPEED_SETTING,
 			HID_FEATURE_REPORT, HID_REQ_GET_REPORT);
 	if (rc)
@@ -621,13 +621,13 @@ etekcity_probe(struct ratbag_device *device)
 	log_debug(device->ratbag, "device is at %d ms of latency\n", drv_data->speed_setting[2]);
 
 	/* profiles are 0-indexed */
-	ratbag_device_init_profiles(device,
+	ghostcat_device_init_profiles(device,
 				    ETEKCITY_PROFILE_MAX + 1,
 				    ETEKCITY_NUM_DPI,
 				    ETEKCITY_BUTTON_MAX + 1,
 				    ETEKCITY_LED);
 
-	ratbag_device_for_each_profile(device, profile)
+	ghostcat_device_for_each_profile(device, profile)
 		etekcity_read_profile(profile);
 
 	active_idx = etekcity_current_profile(device);
@@ -649,37 +649,37 @@ etekcity_probe(struct ratbag_device *device)
 
 	log_raw(device->ratbag,
 		"'%s' is in profile %d\n",
-		ratbag_device_get_name(device),
+		ghostcat_device_get_name(device),
 		profile->index);
 
 	return 0;
 
 err:
 	free(drv_data);
-	ratbag_set_drv_data(device, NULL);
+	ghostcat_set_drv_data(device, NULL);
 	return rc;
 }
 
 static void
-etekcity_remove(struct ratbag_device *device)
+etekcity_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
 static int
-etekcity_commit(struct ratbag_device *device)
+etekcity_commit(struct ghostcat_device *device)
 {
 	int rc = 0;
-	struct ratbag_button *button = NULL;
-	struct ratbag_profile *profile = NULL;
-	struct ratbag_resolution *resolution = NULL;
+	struct ghostcat_button *button = NULL;
+	struct ghostcat_profile *profile = NULL;
+	struct ghostcat_resolution *resolution = NULL;
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		if (!profile->dirty)
 			continue;
 
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			if (!resolution->dirty)
 				continue;
 
@@ -688,7 +688,7 @@ etekcity_commit(struct ratbag_device *device)
 				return rc;
 		}
 
-		ratbag_profile_for_each_button(profile, button) {
+		ghostcat_profile_for_each_button(profile, button) {
 			if (!button->dirty)
 				continue;
 
@@ -705,7 +705,7 @@ etekcity_commit(struct ratbag_device *device)
 	return 0;
 }
 
-struct ratbag_driver etekcity_driver = {
+struct ghostcat_driver etekcity_driver = {
 	.name = "EtekCity",
 	.id = "etekcity",
 	.probe = etekcity_probe,

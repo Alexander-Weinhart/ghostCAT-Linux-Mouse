@@ -28,9 +28,9 @@ import argparse
 import textwrap
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-# This must be on a single line, as we replace it using merge_ratbagd.py while building.
+# This must be on a single line, as we replace it using merge_ghostcatd.py while building.
 # fmt: off
-from ratbagd import Ratbagd, RatbagdDevice, RatbagdProfile, RatbagdMacro, RatbagdResolution, RatbagdButton, RatbagdLed, RatbagdUnavailableError, RatbagCapabilityError, evcode_to_str  # NOQA
+from ghostcatd import Ratbagd, RatbagdDevice, RatbagdProfile, RatbagdMacro, RatbagdResolution, RatbagdButton, RatbagdLed, RatbagdUnavailableError, RatbagCapabilityError, evcode_to_str  # NOQA
 # fmt: on
 
 
@@ -64,18 +64,18 @@ def convert_str_to_evcode(s: str) -> int:
         raise ValueError(msg) from e
 
 
-def list_devices(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    if not ratbagd.devices:
+def list_devices(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    if not ghostcatd.devices:
         print("No devices available.")
 
-    for device in ratbagd.devices:
+    for device in ghostcatd.devices:
         print("{:20s} {:32s}".format(device.id + ":", device.name))
 
 
-def find_device(ratbagd: Ratbagd, args: argparse.Namespace) -> RatbagdDevice:
-    device = ratbagd[args.device]
+def find_device(ghostcatd: Ratbagd, args: argparse.Namespace) -> RatbagdDevice:
+    device = ghostcatd[args.device]
     if device is None:
-        for device in ratbagd.devices:
+        for device in ghostcatd.devices:
             if args.device in device.name:
                 return device
         print(f"Unable to find device {args.device}")
@@ -84,9 +84,9 @@ def find_device(ratbagd: Ratbagd, args: argparse.Namespace) -> RatbagdDevice:
 
 
 def find_profile(
-    ratbagd: Ratbagd, args: argparse.Namespace
+    ghostcatd: Ratbagd, args: argparse.Namespace
 ) -> Tuple[RatbagdProfile, RatbagdDevice]:
-    device = find_device(ratbagd, args)
+    device = find_device(ghostcatd, args)
     try:
         profile = device.profiles[args.profile_n]
     except IndexError:
@@ -94,16 +94,16 @@ def find_profile(
         sys.exit(1)
     except AttributeError:
         profile = device.active_profile
-        if ratbagd is None:
+        if ghostcatd is None:
             print("The device has no active profile")
             sys.exit(1)
     return profile, device
 
 
 def find_resolution(
-    ratbagd: Ratbagd, args: argparse.Namespace
+    ghostcatd: Ratbagd, args: argparse.Namespace
 ) -> Tuple[RatbagdResolution, RatbagdProfile, RatbagdDevice]:
-    profile, device = find_profile(ratbagd, args)
+    profile, device = find_profile(ghostcatd, args)
     try:
         resolution = profile.resolutions[args.resolution_n]
     except IndexError:
@@ -118,9 +118,9 @@ def find_resolution(
 
 
 def find_button(
-    ratbagd: Ratbagd, args: argparse.Namespace
+    ghostcatd: Ratbagd, args: argparse.Namespace
 ) -> Tuple[RatbagdButton, RatbagdProfile, RatbagdDevice]:
-    profile, device = find_profile(ratbagd, args)
+    profile, device = find_profile(ghostcatd, args)
     try:
         button = profile.buttons[args.button_n]
     except IndexError:
@@ -130,9 +130,9 @@ def find_button(
 
 
 def find_led(
-    ratbagd: Ratbagd, args: argparse.Namespace
+    ghostcatd: Ratbagd, args: argparse.Namespace
 ) -> Tuple[RatbagdLed, RatbagdProfile, RatbagdDevice]:
-    profile, device = find_profile(ratbagd, args)
+    profile, device = find_profile(ghostcatd, args)
     try:
         led = profile.leds[args.led_n]
     except IndexError:
@@ -283,19 +283,19 @@ def print_device(device: RatbagdDevice, level: int) -> None:
         print_profile(device, profile, level + 2)
 
 
-def show_device(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    device = find_device(ratbagd, args)
+def show_device(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    device = find_device(ghostcatd, args)
     print_device(device, 0)
 
 
-def show_profile(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def show_profile(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     print(f"Profile {args.profile} on {device.id} ({device.name})")
     print_profile(device, profile, 0)
 
 
-def show_resolution(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, p, d = find_resolution(ratbagd, args)
+def show_resolution(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, p, d = find_resolution(ghostcatd, args)
     print(
         f"Resolution {args.resolution} on Profile {args.profile} on {d.id} ({d.name})"
     )
@@ -308,26 +308,26 @@ def show_resolution(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
     print("  Capabilities: {}".format(", ".join(capabilities)))
 
 
-def show_button(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, profile, device = find_button(ratbagd, args)
+def show_button(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, profile, device = find_button(ghostcatd, args)
     print(
         f"Button {args.button} on Profile {args.profile} on {device.id} ({device.name})"
     )
     print_button(device, profile, button, 0)
 
 
-def func_led_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    led, profile, device = find_led(ratbagd, args)
+def func_led_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    led, profile, device = find_led(ghostcatd, args)
     print_led(device, profile, led, 0)
 
 
-def func_led_caps(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    led, profile, device = find_led(ratbagd, args)
+def func_led_caps(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    led, profile, device = find_led(ghostcatd, args)
     print_led_caps(device, profile, led, 0)
 
 
-def func_led_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    led, _profile, device = find_led(ratbagd, args)
+def func_led_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    led, _profile, device = find_led(ghostcatd, args)
     try:
         mode = args.mode
     except AttributeError:
@@ -361,19 +361,19 @@ def func_led_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
     commit(device, args)
 
 
-def func_led_get_all(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_led_get_all(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     for led in profile.leds:
         print_led(device, profile, led, 0)
 
 
-def func_button_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, profile, _device = find_button(ratbagd, args)
+def func_button_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, profile, _device = find_button(ghostcatd, args)
     print_button(button, profile, button, 0)
 
 
-def func_button_action_set_none(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, _profile, device = find_button(ratbagd, args)
+def func_button_action_set_none(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, _profile, device = find_button(ghostcatd, args)
     if button.ActionType.NONE not in button.action_types:
         raise RatbagCapabilityError("disabling buttons is not supported on this device")
 
@@ -381,14 +381,14 @@ def func_button_action_set_none(ratbagd: Ratbagd, args: argparse.Namespace) -> N
     commit(device, args)
 
 
-def func_button_action_set_button(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, _profile, device = find_button(ratbagd, args)
+def func_button_action_set_button(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, _profile, device = find_button(ghostcatd, args)
     button.mapping = args.target_button
     commit(device, args)
 
 
-def func_button_action_set_special(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, _profile, device = find_button(ratbagd, args)
+def func_button_action_set_special(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, _profile, device = find_button(ghostcatd, args)
     try:
         special = args.target_special
     except AttributeError:
@@ -398,8 +398,8 @@ def func_button_action_set_special(ratbagd: Ratbagd, args: argparse.Namespace) -
     commit(device, args)
 
 
-def func_button_action_set_key(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, _profile, device = find_button(ratbagd, args)
+def func_button_action_set_key(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, _profile, device = find_button(ghostcatd, args)
     if button.ActionType.KEY not in button.action_types:
         raise RatbagCapabilityError("assigning a key is not supported on this device")
 
@@ -412,8 +412,8 @@ def func_button_action_set_key(ratbagd: Ratbagd, args: argparse.Namespace) -> No
     commit(device, args)
 
 
-def func_button_action_set_macro(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    button, _profile, device = find_button(ratbagd, args)
+def func_button_action_set_macro(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    button, _profile, device = find_button(ghostcatd, args)
     if button.ActionType.MACRO not in button.action_types:
         raise RatbagCapabilityError("assigning a macro is not supported on this device")
 
@@ -450,27 +450,27 @@ def func_button_action_set_macro(ratbagd: Ratbagd, args: argparse.Namespace) -> 
     commit(device, args)
 
 
-def func_button_count(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_button_count(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     print(len(profile.buttons))
 
 
-def func_dpi_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    ratbagd, _profile, _device = find_resolution(ratbagd, args)
-    if len(ratbagd.resolution) == 2:
-        print(f"{ratbagd.resolution[0]}x{ratbagd.resolution[1]}dpi")
+def func_dpi_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    ghostcatd, _profile, _device = find_resolution(ghostcatd, args)
+    if len(ghostcatd.resolution) == 2:
+        print(f"{ghostcatd.resolution[0]}x{ghostcatd.resolution[1]}dpi")
     else:
-        print(f"{ratbagd.resolution[0]}dpi")
+        print(f"{ghostcatd.resolution[0]}dpi")
 
 
-def func_dpi_get_all(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, _device = find_resolution(ratbagd, args)
+def func_dpi_get_all(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, _device = find_resolution(ghostcatd, args)
     dpis = resolution.resolutions
     print(" ".join([str(x) for x in dpis]))
 
 
-def func_dpi_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, device = find_resolution(ratbagd, args)
+def func_dpi_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, device = find_resolution(ghostcatd, args)
     dpi = args.dpi_n
     if len(resolution.resolution) > len(dpi):
         dpi = (dpi[0], dpi[0])
@@ -478,73 +478,73 @@ def func_dpi_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
     commit(device, args)
 
 
-def func_report_rate_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_report_rate_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     print(profile.report_rate)
 
 
-def func_report_rate_get_all(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_report_rate_get_all(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     rates = profile.report_rates
     print(" ".join([str(x) for x in rates]))
 
 
-def func_report_rate_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_report_rate_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     profile.report_rate = args.rate_n
     commit(device, args)
 
 
-def func_angle_snapping_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_angle_snapping_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     if profile.angle_snapping == -1:
         return
     print(bool(profile.angle_snapping))
 
 
-def func_angle_snapping_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_angle_snapping_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     profile.angle_snapping = 1 if args.angle_snapping_n else 0
     commit(device, args)
 
 
-def func_debounce_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_debounce_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     if profile.debounce == -1:
         return
     print(profile.debounce)
 
 
-def func_debounce_get_all(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_debounce_get_all(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     values = profile.debounces
     print(" ".join([str(x) for x in values]))
 
 
-def func_debounce_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_debounce_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     profile.debounce = args.debounce_n
     commit(device, args)
 
 
-def func_resolution_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, profile, device = find_resolution(ratbagd, args)
+def func_resolution_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, profile, device = find_resolution(ghostcatd, args)
     print_resolution(device, profile, resolution, 0)
 
 
-def func_resolution_active_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_resolution_active_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     print(profile.active_resolution.index)
 
 
-def func_resolution_active_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, device = find_resolution(ratbagd, args)
+def func_resolution_active_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, device = find_resolution(ghostcatd, args)
     resolution.set_active()
     commit(device, args)
 
 
-def func_resolution_default_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_resolution_default_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     resolution = None
     for resolution in profile.resolutions:
         if resolution.is_default:
@@ -557,51 +557,51 @@ def func_resolution_default_get(ratbagd: Ratbagd, args: argparse.Namespace) -> N
     print(resolution.index)
 
 
-def func_default_resolution_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
+def func_default_resolution_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
     # FIXME: capabilities check?
-    resolution, _profile, device = find_resolution(ratbagd, args)
+    resolution, _profile, device = find_resolution(ghostcatd, args)
     resolution.set_default()
     commit(device, args)
 
 
-def func_resolution_disabled_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, _device = find_resolution(ratbagd, args)
+def func_resolution_disabled_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, _device = find_resolution(ghostcatd, args)
     print(resolution.is_disabled)
 
 
-def func_resolution_enabled_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, _device = find_resolution(ratbagd, args)
+def func_resolution_enabled_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, _device = find_resolution(ghostcatd, args)
     print(not resolution.is_disabled)
 
 
-def func_resolution_disabled_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, device = find_resolution(ratbagd, args)
+def func_resolution_disabled_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, device = find_resolution(ghostcatd, args)
     resolution.set_disabled(True)
     commit(device, args)
 
 
-def func_resolution_enabled_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    resolution, _profile, device = find_resolution(ratbagd, args)
+def func_resolution_enabled_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    resolution, _profile, device = find_resolution(ghostcatd, args)
     resolution.set_disabled(False)
     commit(device, args)
 
 
-def func_profile_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_profile_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     print_profile(device, profile, 0)
 
 
-def func_profile_name_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, _device = find_profile(ratbagd, args)
+def func_profile_name_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, _device = find_profile(ghostcatd, args)
     # See https://github.com/libratbag/libratbag/issues/617
     # ratbag converts to ascii, so this has no real effect there, but
-    # ratbag-command may still have a non-ascii string.
+    # ghostcat-command may still have a non-ascii string.
     string = bytes(profile.name, "utf-8", "ignore")
     print(string.decode("utf-8"))
 
 
-def func_profile_name_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_profile_name_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     if not profile.name:
         raise RatbagCapabilityError(
             "assigning a profile name is not supported on this profile"
@@ -610,8 +610,8 @@ def func_profile_name_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
     commit(device, args)
 
 
-def func_profile_active_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    device = find_device(ratbagd, args)
+def func_profile_active_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    device = find_device(ghostcatd, args)
     profile = device.active_profile
     if profile is None:
         print("The device has no active profile")
@@ -619,26 +619,26 @@ def func_profile_active_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
     print(profile.index)
 
 
-def func_profile_active_set(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_profile_active_set(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     profile.set_active()
     commit(device, args)
 
 
-def func_profile_enable(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_profile_enable(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     profile.disabled = False
     commit(device, args)
 
 
-def func_profile_disable(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    profile, device = find_profile(ratbagd, args)
+def func_profile_disable(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    profile, device = find_profile(ghostcatd, args)
     profile.disabled = True
     commit(device, args)
 
 
-def func_device_name_get(ratbagd: Ratbagd, args: argparse.Namespace) -> None:
-    device = find_device(ratbagd, args)
+def func_device_name_get(ghostcatd: Ratbagd, args: argparse.Namespace) -> None:
+    device = find_device(ghostcatd, args)
     print(device.name)
 
 
@@ -1799,7 +1799,7 @@ Common options:
         )
         if self.want_keepalive:
             print(
-                "    --keepalive                 do not terminate ratbagd after the"
+                "    --keepalive                 do not terminate ghostcatd after the"
                 " processing"
             )
         print(
@@ -1836,7 +1836,7 @@ def get_parser() -> RatbagParserRoot:
     return RatbagParserRoot(parser_def)
 
 
-def on_device_added(_ratbagd: Ratbagd, device: RatbagdDevice) -> None:
+def on_device_added(_ghostcatd: Ratbagd, device: RatbagdDevice) -> None:
     device_names = [
         "mara",
         "capybara",
@@ -1911,32 +1911,32 @@ def on_device_added(_ratbagd: Ratbagd, device: RatbagdDevice) -> None:
     device.id = "-".join([attr, name])
 
 
-def open_ratbagd(
-    ratbagd_process: Optional[subprocess.Popen] = None, verbose: int = 0
+def open_ghostcatd(
+    ghostcatd_process: Optional[subprocess.Popen] = None, verbose: int = 0
 ) -> Optional[Ratbagd]:
     try:
-        ratbagd = Ratbagd(RATBAGD_API_VERSION)
-        ratbagd.verbose = verbose
+        ghostcatd = Ratbagd(RATBAGD_API_VERSION)
+        ghostcatd.verbose = verbose
         try:
-            ratbagd.connect("device-added", on_device_added)
-            for device in ratbagd.devices:
-                on_device_added(ratbagd, device)
+            ghostcatd.connect("device-added", on_device_added)
+            for device in ghostcatd.devices:
+                on_device_added(ghostcatd, device)
         except AttributeError:
-            pass  # the ratbag-command case
+            pass  # the ghostcat-command case
 
     except RatbagdUnavailableError as e:
-        print(f"Unable to connect to ratbagd: {e}")
+        print(f"Unable to connect to ghostcatd: {e}")
         return None
 
-    if ratbagd_process is not None:
-        # if some old version of ratbagd is still running, ratbagd_process may
+    if ghostcatd_process is not None:
+        # if some old version of ghostcatd is still running, ghostcatd_process may
         # have never started but our DBus bindings may succeed. Check for the
-        # return code here, this also gives ratbagd enough time to start and
+        # return code here, this also gives ghostcatd enough time to start and
         # die. If we check immediately we may not have terminated yet.
-        ratbagd_process.poll()
-        assert ratbagd_process.returncode is None
+        ghostcatd_process.poll()
+        assert ghostcatd_process.returncode is None
 
-    return ratbagd
+    return ghostcatd
 
 
 def main(argv: List[str]) -> int:
@@ -1949,7 +1949,7 @@ def main(argv: List[str]) -> int:
         parser.print_help()
         return 0
 
-    _r = open_ratbagd(verbose=cmd.verbose)
+    _r = open_ghostcatd(verbose=cmd.verbose)
     if _r is not None:
         with _r as r:
             try:

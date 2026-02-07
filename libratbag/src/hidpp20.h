@@ -31,7 +31,7 @@
 #include <stdint.h>
 
 #include "hidpp-generic.h"
-#include "libratbag-util.h"
+#include "libghostcat-util.h"
 
 struct _hidpp20_message {
 	uint8_t report_id;
@@ -357,8 +357,8 @@ int hidpp20_special_key_mouse_get_controls(struct hidpp20_device *device,
 int hidpp20_special_key_mouse_set_control(struct hidpp20_device *device,
 					  struct hidpp20_control_id *control);
 
-const struct ratbag_button_action *hidpp20_1b04_get_logical_mapping(uint16_t value);
-uint16_t hidpp20_1b04_get_logical_control_id(const struct ratbag_button_action *action);
+const struct ghostcat_button_action *hidpp20_1b04_get_logical_mapping(uint16_t value);
+uint16_t hidpp20_1b04_get_logical_control_id(const struct ghostcat_button_action *action);
 const char *hidpp20_1b04_get_logical_mapping_name(uint16_t value);
 const char *hidpp20_1b04_get_physical_mapping_name(uint16_t value);
 
@@ -991,11 +991,11 @@ int
 hidpp20_onboard_profiles_commit(struct hidpp20_device *device,
 				struct hidpp20_profiles *profiles_list);
 
-enum ratbag_button_action_special
+enum ghostcat_button_action_special
 hidpp20_onboard_profiles_get_special(uint8_t code);
 
 uint8_t
-hidpp20_onboard_profiles_get_code_from_special(enum ratbag_button_action_special special);
+hidpp20_onboard_profiles_get_code_from_special(enum ghostcat_button_action_special special);
 
 int
 hidpp20_onboard_profiles_read_sector(struct hidpp20_device *device,

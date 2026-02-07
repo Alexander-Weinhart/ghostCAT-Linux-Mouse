@@ -1,8 +1,8 @@
 #pragma once
-#include "libratbag-private.h"
+#include "libghostcat-private.h"
 
 int
-marsgaming_probe(struct ratbag_device *device);
+marsgaming_probe(struct ghostcat_device *device);
 
 void
-marsgaming_release_device(struct ratbag_device *device);
+marsgaming_release_device(struct ghostcat_device *device);

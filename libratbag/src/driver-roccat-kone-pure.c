@@ -30,8 +30,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "libratbag-private.h"
-#include "libratbag-hidraw.h"
+#include "libghostcat-private.h"
+#include "libghostcat-hidraw.h"
 
 #define ROCCAT_PROFILE_MAX			4
 #define ROCCAT_BUTTON_MAX			17
@@ -103,7 +103,7 @@ struct roccat_data {
 
 struct roccat_button_mapping {
 	uint8_t raw;
-	struct ratbag_button_action action;
+	struct ghostcat_button_action action;
 };
 
 static struct roccat_button_mapping roccat_button_mapping[] = {
@@ -111,22 +111,22 @@ static struct roccat_button_mapping roccat_button_mapping[] = {
 	{ 1, BUTTON_ACTION_BUTTON(1) },
 	{ 2, BUTTON_ACTION_BUTTON(2) },
 	{ 3, BUTTON_ACTION_BUTTON(3) },
-	{ 4, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_DOUBLECLICK) },
+	{ 4, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_DOUBLECLICK) },
 /* FIXME:	{ 5, Shortcut (modifier + key) }, */
 	{ 6, BUTTON_ACTION_NONE },
 	{ 7, BUTTON_ACTION_BUTTON(4) },
 	{ 8, BUTTON_ACTION_BUTTON(5) },
-	//{ 9, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_LEFT) },
-	//{ 10, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT) },
-	{ 13, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_UP) },
-	{ 14, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_WHEEL_DOWN) },
+	//{ 9, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_LEFT) },
+	//{ 10, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_RIGHT) },
+	{ 13, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_UP) },
+	{ 14, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_WHEEL_DOWN) },
 /* FIXME:	{ 15, quicklaunch },  -> hidraw report 03 00 60 07 01 00 00 00 */
-	{ 16, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
-	{ 17, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_UP) },
-	{ 18, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_DOWN) },
-	{ 20, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
-	{ 21, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
-	{ 22, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
+	{ 16, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) },
+	{ 17, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_UP) },
+	{ 18, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_DOWN) },
+	{ 20, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
+	{ 21, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
+	{ 22, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
 	{ 26, BUTTON_ACTION_KEY(KEY_LEFTMETA) },
 /* FIXME:	{ 27, open driver },  -> hidraw report 02 83 01 00 00 00 00 00 */
 	//{ 32, BUTTON_ACTION_KEY(KEY_CONFIG) },
@@ -138,7 +138,7 @@ static struct roccat_button_mapping roccat_button_mapping[] = {
 	{ 38, BUTTON_ACTION_KEY(KEY_VOLUMEUP) },
 	{ 39, BUTTON_ACTION_KEY(KEY_VOLUMEDOWN) },
 	{ 48, BUTTON_ACTION_MACRO },
-	{ 65, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_SECOND_MODE) },
+	{ 65, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_SECOND_MODE) },
 /* FIXME:	{ 66, Easywheel sensitivity }, */
 /* FIXME:	{ 67, Easywheel profile }, */
 /* FIXME:	{ 68, Easywheel CPI }, */
@@ -147,7 +147,7 @@ static struct roccat_button_mapping roccat_button_mapping[] = {
 /* FIXME:	{ 83, Both Easyshift },		-> hidraw report 03 00 ff 04 01 00 00 00 */
 };
 
-static const struct ratbag_button_action*
+static const struct ghostcat_button_action*
 roccat_raw_to_button_action(uint8_t data)
 {
 	struct roccat_button_mapping *mapping;
@@ -161,12 +161,12 @@ roccat_raw_to_button_action(uint8_t data)
 }
 
 static uint8_t
-roccat_button_action_to_raw(const struct ratbag_button_action *action)
+roccat_button_action_to_raw(const struct ghostcat_button_action *action)
 {
 	struct roccat_button_mapping *mapping;
 
 	ARRAY_FOR_EACH(roccat_button_mapping, mapping) {
-		if (ratbag_button_action_match(&mapping->action, action))
+		if (ghostcat_button_action_match(&mapping->action, action))
 			return mapping->raw;
 	}
 
@@ -196,7 +196,7 @@ roccat_compute_crc(uint8_t *buf, unsigned int len)
 }
 
 static inline int
-roccat_crc_is_valid(struct ratbag_device *device, uint8_t *buf, unsigned int len)
+roccat_crc_is_valid(struct ghostcat_device *device, uint8_t *buf, unsigned int len)
 {
 	uint16_t crc;
 	uint16_t given_crc;
@@ -217,12 +217,12 @@ roccat_crc_is_valid(struct ratbag_device *device, uint8_t *buf, unsigned int len
 }
 
 static int
-roccat_is_ready(struct ratbag_device *device)
+roccat_is_ready(struct ghostcat_device *device)
 {
 	uint8_t buf[3] = { 0 };
 	int rc;
 
-	rc = ratbag_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_CONFIGURE_PROFILE,
+	rc = ghostcat_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_CONFIGURE_PROFILE,
 					      buf, sizeof(buf));
 	if (rc < 0)
 		return rc;
@@ -239,7 +239,7 @@ roccat_is_ready(struct ratbag_device *device)
 }
 
 static int
-roccat_wait_ready(struct ratbag_device *device)
+roccat_wait_ready(struct ghostcat_device *device)
 {
 	unsigned count = 0;
 	int rc;
@@ -264,12 +264,12 @@ roccat_wait_ready(struct ratbag_device *device)
 }
 
 static int
-roccat_current_profile(struct ratbag_device *device)
+roccat_current_profile(struct ghostcat_device *device)
 {
 	uint8_t buf[3];
 	int ret;
 
-	ret = ratbag_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_PROFILE, buf,
+	ret = ghostcat_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_PROFILE, buf,
 					       sizeof(buf));
 	if (ret < 0)
 		return ret;
@@ -281,7 +281,7 @@ roccat_current_profile(struct ratbag_device *device)
 }
 
 static int
-roccat_set_current_profile(struct ratbag_device *device, unsigned int index)
+roccat_set_current_profile(struct ghostcat_device *device, unsigned int index)
 {
 	uint8_t buf[] = {ROCCAT_REPORT_ID_PROFILE, 0x03, index};
 	int ret;
@@ -289,7 +289,7 @@ roccat_set_current_profile(struct ratbag_device *device, unsigned int index)
 	if (index > ROCCAT_PROFILE_MAX)
 		return -EINVAL;
 
-	ret = ratbag_hidraw_set_feature_report(device, buf[0], buf,
+	ret = ghostcat_hidraw_set_feature_report(device, buf[0], buf,
 					       sizeof(buf));
 
 	if (ret < 0)
@@ -308,7 +308,7 @@ roccat_set_current_profile(struct ratbag_device *device, unsigned int index)
 }
 
 static int
-roccat_set_config_profile(struct ratbag_device *device, uint8_t profile, uint8_t type)
+roccat_set_config_profile(struct ghostcat_device *device, uint8_t profile, uint8_t type)
 {
 	uint8_t buf[] = {ROCCAT_REPORT_ID_CONFIGURE_PROFILE, profile, type};
 	int ret;
@@ -316,7 +316,7 @@ roccat_set_config_profile(struct ratbag_device *device, uint8_t profile, uint8_t
 	if (profile > ROCCAT_PROFILE_MAX)
 		return -EINVAL;
 
-	ret = ratbag_hidraw_set_feature_report(device, buf[0], buf,
+	ret = ghostcat_hidraw_set_feature_report(device, buf[0], buf,
 					       sizeof(buf));
 	if (ret < 0)
 		return ret;
@@ -333,12 +333,12 @@ roccat_set_config_profile(struct ratbag_device *device, uint8_t profile, uint8_t
 	return ret;
 }
 
-static const struct ratbag_button_action *
-roccat_button_to_action(struct ratbag_profile *profile,
+static const struct ghostcat_button_action *
+roccat_button_to_action(struct ghostcat_profile *profile,
 			  unsigned int button_index)
 {
-	struct ratbag_device *device = profile->device;
-	struct roccat_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_device *device = profile->device;
+	struct roccat_data *drv_data = ghostcat_get_drv_data(device);
 	uint8_t data;
 
 	data = drv_data->profiles[profile->index][3 + button_index * 3];
@@ -346,9 +346,9 @@ roccat_button_to_action(struct ratbag_profile *profile,
 }
 
 static int
-roccat_write_profile(struct ratbag_profile *profile)
+roccat_write_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	unsigned int index = profile->index;
 	struct roccat_data *drv_data;
 	int rc;
@@ -357,13 +357,13 @@ roccat_write_profile(struct ratbag_profile *profile)
 
 	assert(index <= ROCCAT_PROFILE_MAX);
 
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 	buf = drv_data->profiles[index];
 	crc = (uint16_t *)&buf[ROCCAT_REPORT_SIZE_PROFILE - 2];
 	*crc = roccat_compute_crc(buf, ROCCAT_REPORT_SIZE_PROFILE);
 
 	roccat_set_config_profile(device, index, ROCCAT_CONFIG_KEY_MAPPING);
-	rc = ratbag_hidraw_set_feature_report(device, ROCCAT_REPORT_ID_KEY_MAPPING,
+	rc = ghostcat_hidraw_set_feature_report(device, ROCCAT_REPORT_ID_KEY_MAPPING,
 					      buf, ROCCAT_REPORT_SIZE_PROFILE);
 
 	if (rc < ROCCAT_REPORT_SIZE_PROFILE)
@@ -383,10 +383,10 @@ roccat_write_profile(struct ratbag_profile *profile)
 }
 
 static void
-roccat_read_button(struct ratbag_button *button)
+roccat_read_button(struct ghostcat_button *button)
 {
-	const struct ratbag_button_action *action;
-	struct ratbag_device *device;
+	const struct ghostcat_button_action *action;
+	struct ghostcat_device *device;
 	struct roccat_macro *macro;
 	struct roccat_data *drv_data;
 	uint8_t *buf;
@@ -394,21 +394,21 @@ roccat_read_button(struct ratbag_button *button)
 	int rc;
 
 	device = button->profile->device;
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 	action = roccat_button_to_action(button->profile, button->index);
 	if (action)
-		ratbag_button_set_action(button, action);
+		ghostcat_button_set_action(button, action);
 //	if (action == NULL)
 //		log_error(device->ratbag, "button: %d -> %d %s:%d\n",
 //			button->index, drv_data->profiles[button->profile->index][3 + button->index * 3],
 //			__FILE__, __LINE__);
 
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_BUTTON);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_SPECIAL);
-	ratbag_button_enable_action_type(button, RATBAG_BUTTON_ACTION_TYPE_MACRO);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL);
+	ghostcat_button_enable_action_type(button, GHOSTCAT_BUTTON_ACTION_TYPE_MACRO);
 
-	if (action && action->type == RATBAG_BUTTON_ACTION_TYPE_MACRO) {
-		struct ratbag_button_macro *m = NULL;
+	if (action && action->type == GHOSTCAT_BUTTON_ACTION_TYPE_MACRO) {
+		struct ghostcat_button_macro *m = NULL;
 
 		roccat_set_config_profile(device,
 					  button->profile->index,
@@ -419,7 +419,7 @@ roccat_read_button(struct ratbag_button *button)
 		macro = &drv_data->macros[button->profile->index][button->index];
 		buf = (uint8_t*)macro;
 		buf[0] = ROCCAT_REPORT_ID_MACRO;
-		rc = ratbag_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_MACRO,
+		rc = ghostcat_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_MACRO,
 						      buf, ROCCAT_REPORT_SIZE_MACRO);
 		if (rc != ROCCAT_REPORT_SIZE_MACRO) {
 			log_error(device->ratbag,
@@ -442,25 +442,25 @@ roccat_read_button(struct ratbag_button *button)
 				goto out_macro;
 			}
 
-			m = ratbag_button_macro_new(macro->name);
+			m = ghostcat_button_macro_new(macro->name);
 			log_raw(device->ratbag,
 				"macro on button %d of profile %d is named '%s', and contains %d events:\n",
 				button->index, button->profile->index,
 				macro->name, macro->length);
 			for (j = 0; j < macro->length; j++) {
-				unsigned int keycode = ratbag_hidraw_get_keycode_from_keyboard_usage(device,
+				unsigned int keycode = ghostcat_hidraw_get_keycode_from_keyboard_usage(device,
 								macro->keys[j].keycode);
-				ratbag_button_macro_set_event(m,
+				ghostcat_button_macro_set_event(m,
 							      j * 2,
-							      macro->keys[j].flag & 0x01 ? RATBAG_MACRO_EVENT_KEY_PRESSED : RATBAG_MACRO_EVENT_KEY_RELEASED,
+							      macro->keys[j].flag & 0x01 ? GHOSTCAT_MACRO_EVENT_KEY_PRESSED : GHOSTCAT_MACRO_EVENT_KEY_RELEASED,
 							      keycode);
 				if (macro->keys[j].time)
 					time = macro->keys[j].time;
 				else
 					time = macro->keys[j].flag & 0x01 ? 10 : 50;
-				ratbag_button_macro_set_event(m,
+				ghostcat_button_macro_set_event(m,
 							      j * 2 + 1,
-							      RATBAG_MACRO_EVENT_WAIT,
+							      GHOSTCAT_MACRO_EVENT_WAIT,
 							      time);
 
 				log_raw(device->ratbag,
@@ -468,64 +468,64 @@ roccat_read_button(struct ratbag_button *button)
 					libevdev_event_code_get_name(EV_KEY, keycode),
 					macro->keys[j].flag & 0x80 ? "released" : "pressed");
 			}
-			ratbag_button_copy_macro(button, m);
+			ghostcat_button_copy_macro(button, m);
 		}
 out_macro:
 		msleep(10);
-		ratbag_button_macro_unref(m);
+		ghostcat_button_macro_unref(m);
 	}
 }
 
 static int
-roccat_write_macro(struct ratbag_button *button,
-		     const struct ratbag_button_action *action)
+roccat_write_macro(struct ghostcat_button *button,
+		     const struct ghostcat_button_action *action)
 {
-	struct ratbag_device *device;
+	struct ghostcat_device *device;
 	struct roccat_macro *macro;
 	struct roccat_data *drv_data;
 	uint8_t *buf;
 	unsigned i, count = 0;
 	int rc;
 
-	if (action->type != RATBAG_BUTTON_ACTION_TYPE_MACRO)
+	if (action->type != GHOSTCAT_BUTTON_ACTION_TYPE_MACRO)
 		return 0;
 
 	device = button->profile->device;
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 	macro = &drv_data->macros[button->profile->index][button->index];
 	buf = (uint8_t*)macro;
 
 	memset(buf, 0, ROCCAT_REPORT_SIZE_MACRO);
 
 	for (i = 0; i < MAX_MACRO_EVENTS && count < ROCCAT_MAX_MACRO_LENGTH; i++) {
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_INVALID)
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_INVALID)
 			return -EINVAL; /* should not happen, ever */
 
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_NONE)
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_NONE)
 			break;
 
 		/* ignore the first wait */
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_WAIT &&
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_WAIT &&
 		    !count)
 			continue;
 
-		if (action->macro->events[i].type == RATBAG_MACRO_EVENT_KEY_PRESSED ||
-		    action->macro->events[i].type == RATBAG_MACRO_EVENT_KEY_RELEASED) {
-			macro->keys[count].keycode = ratbag_hidraw_get_keyboard_usage_from_keycode(device, action->macro->events[i].event.key);
+		if (action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_KEY_PRESSED ||
+		    action->macro->events[i].type == GHOSTCAT_MACRO_EVENT_KEY_RELEASED) {
+			macro->keys[count].keycode = ghostcat_hidraw_get_keyboard_usage_from_keycode(device, action->macro->events[i].event.key);
 		}
 
 		switch (action->macro->events[i].type) {
-		case RATBAG_MACRO_EVENT_KEY_PRESSED:
+		case GHOSTCAT_MACRO_EVENT_KEY_PRESSED:
 			macro->keys[count].flag = 0x01;
 			break;
-		case RATBAG_MACRO_EVENT_KEY_RELEASED:
+		case GHOSTCAT_MACRO_EVENT_KEY_RELEASED:
 			macro->keys[count].flag = 0x02;
 			break;
-		case RATBAG_MACRO_EVENT_WAIT:
+		case GHOSTCAT_MACRO_EVENT_WAIT:
 			macro->keys[--count].time = action->macro->events[i].event.timeout;
 			break;
-		case RATBAG_MACRO_EVENT_INVALID:
-		case RATBAG_MACRO_EVENT_NONE:
+		case GHOSTCAT_MACRO_EVENT_INVALID:
+		case GHOSTCAT_MACRO_EVENT_NONE:
 			/* should not happen */
 			log_error(device->ratbag,
 				  "something went wrong while writing a macro.\n");
@@ -544,7 +544,7 @@ roccat_write_macro(struct ratbag_button *button,
 	macro->length = count;
 	macro->checksum = roccat_compute_crc(buf, ROCCAT_REPORT_SIZE_MACRO);
 
-	rc = ratbag_hidraw_set_feature_report(device, ROCCAT_REPORT_ID_MACRO,
+	rc = ghostcat_hidraw_set_feature_report(device, ROCCAT_REPORT_ID_MACRO,
 					      buf, ROCCAT_REPORT_SIZE_MACRO);
 	if (rc < 0)
 		return rc;
@@ -562,12 +562,12 @@ roccat_write_macro(struct ratbag_button *button,
 }
 
 static int
-roccat_write_button(struct ratbag_button *button)
+roccat_write_button(struct ghostcat_button *button)
 {
-	const struct ratbag_button_action *action = &button->action;
-	struct ratbag_profile *profile = button->profile;
-	struct ratbag_device *device = profile->device;
-	struct roccat_data *drv_data = ratbag_get_drv_data(device);
+	const struct ghostcat_button_action *action = &button->action;
+	struct ghostcat_profile *profile = button->profile;
+	struct ghostcat_device *device = profile->device;
+	struct roccat_data *drv_data = ghostcat_get_drv_data(device);
 	uint8_t rc, *data;
 
 	data = &drv_data->profiles[profile->index][3 + button->index * 3];
@@ -598,11 +598,11 @@ roccat_write_button(struct ratbag_button *button)
 }
 
 static int
-roccat_write_resolution(struct ratbag_resolution *resolution)
+roccat_write_resolution(struct ghostcat_resolution *resolution)
 {
-	struct ratbag_profile *profile = resolution->profile;
-	struct ratbag_device *device = profile->device;
-	struct roccat_data *drv_data = ratbag_get_drv_data(device);
+	struct ghostcat_profile *profile = resolution->profile;
+	struct ghostcat_device *device = profile->device;
+	struct roccat_data *drv_data = ghostcat_get_drv_data(device);
 	struct roccat_settings_report *settings_report;
 	uint8_t *buf;
 	int rc;
@@ -627,7 +627,7 @@ roccat_write_resolution(struct ratbag_resolution *resolution)
 	// No checksum for settings report on Kone Pure.
 	//settings_report->checksum = roccat_compute_crc(buf, ROCCAT_REPORT_SIZE_SETTINGS);
 
-	rc = ratbag_hidraw_set_feature_report(device, ROCCAT_REPORT_ID_SETTINGS,
+	rc = ghostcat_hidraw_set_feature_report(device, ROCCAT_REPORT_ID_SETTINGS,
 					      buf, ROCCAT_REPORT_SIZE_SETTINGS);
 
 	if (rc < 0)
@@ -646,12 +646,12 @@ roccat_write_resolution(struct ratbag_resolution *resolution)
 }
 
 static void
-roccat_read_profile(struct ratbag_profile *profile)
+roccat_read_profile(struct ghostcat_profile *profile)
 {
-	struct ratbag_device *device = profile->device;
+	struct ghostcat_device *device = profile->device;
 	struct roccat_data *drv_data;
-	struct ratbag_resolution *resolution;
-	struct ratbag_button *button;
+	struct ghostcat_resolution *resolution;
+	struct ghostcat_button *button;
 	struct roccat_settings_report *setting_report;
 	uint8_t *buf;
 	unsigned int report_rate;
@@ -661,12 +661,12 @@ roccat_read_profile(struct ratbag_profile *profile)
 
 	assert(profile->index <= ROCCAT_PROFILE_MAX);
 
-	drv_data = ratbag_get_drv_data(device);
+	drv_data = ghostcat_get_drv_data(device);
 
 	setting_report = &drv_data->settings[profile->index];
 	buf = (uint8_t*)setting_report;
 	roccat_set_config_profile(device, profile->index, ROCCAT_CONFIG_SETTINGS);
-	rc = ratbag_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_SETTINGS,
+	rc = ghostcat_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_SETTINGS,
 					      buf, ROCCAT_REPORT_SIZE_SETTINGS);
 
 	if (rc < ROCCAT_REPORT_SIZE_SETTINGS)
@@ -682,11 +682,11 @@ roccat_read_profile(struct ratbag_profile *profile)
 		report_rate = 0;
 	}
 
-	ratbag_profile_set_report_rate_list(profile, report_rates,
+	ghostcat_profile_set_report_rate_list(profile, report_rates,
 					    ARRAY_LENGTH(report_rates));
 	profile->hz = report_rate;
 
-	ratbag_profile_for_each_resolution(profile, resolution) {
+	ghostcat_profile_for_each_resolution(profile, resolution) {
 		dpi_x = setting_report->xres[resolution->index] * 50;
 		dpi_y = setting_report->yres[resolution->index] * 50;
 		if (!(setting_report->dpi_mask & (1 << resolution->index))) {
@@ -695,17 +695,17 @@ roccat_read_profile(struct ratbag_profile *profile)
 			dpi_y = 0;
 		}
 
-		ratbag_resolution_set_resolution(resolution, dpi_x, dpi_y);
-		ratbag_resolution_set_cap(resolution,
-					  RATBAG_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
+		ghostcat_resolution_set_resolution(resolution, dpi_x, dpi_y);
+		ghostcat_resolution_set_cap(resolution,
+					  GHOSTCAT_RESOLUTION_CAP_SEPARATE_XY_RESOLUTION);
 		resolution->is_active = (resolution->index == setting_report->current_dpi);
 
-		ratbag_resolution_set_dpi_list_from_range(resolution, 100, 5000);
+		ghostcat_resolution_set_dpi_list_from_range(resolution, 100, 5000);
 	}
 
 	buf = drv_data->profiles[profile->index];
 	roccat_set_config_profile(device, profile->index, ROCCAT_CONFIG_KEY_MAPPING);
-	rc = ratbag_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_KEY_MAPPING,
+	rc = ghostcat_hidraw_get_feature_report(device, ROCCAT_REPORT_ID_KEY_MAPPING,
 					      buf, ROCCAT_REPORT_SIZE_PROFILE);
 
 	msleep(10);
@@ -714,7 +714,7 @@ roccat_read_profile(struct ratbag_profile *profile)
 		return;
 
 	// Buttons were read from the buffer that was yet un-initialized with the device data.
-	ratbag_profile_for_each_button(profile, button)
+	ghostcat_profile_for_each_button(profile, button)
 		roccat_read_button(button);
 
 	if (!roccat_crc_is_valid(device, buf, ROCCAT_REPORT_SIZE_PROFILE))
@@ -728,33 +728,33 @@ roccat_read_profile(struct ratbag_profile *profile)
 }
 
 static int
-roccat_probe(struct ratbag_device *device)
+roccat_probe(struct ghostcat_device *device)
 {
 	int rc;
-	struct ratbag_profile *profile;
+	struct ghostcat_profile *profile;
 	struct roccat_data *drv_data;
 	int active_idx;
 
-	rc = ratbag_open_hidraw(device);
+	rc = ghostcat_open_hidraw(device);
 	if (rc)
 		return rc;
 
-	if (!ratbag_hidraw_has_report(device, ROCCAT_REPORT_ID_KEY_MAPPING)) {
-		ratbag_close_hidraw(device);
+	if (!ghostcat_hidraw_has_report(device, ROCCAT_REPORT_ID_KEY_MAPPING)) {
+		ghostcat_close_hidraw(device);
 		return -ENODEV;
 	}
 
 	drv_data = zalloc(sizeof(*drv_data));
-	ratbag_set_drv_data(device, drv_data);
+	ghostcat_set_drv_data(device, drv_data);
 
 	/* profiles are 0-indexed */
-	ratbag_device_init_profiles(device,
+	ghostcat_device_init_profiles(device,
 				    ROCCAT_PROFILE_MAX + 1,
 				    ROCCAT_NUM_DPI,
 				    ROCCAT_BUTTON_MAX + 1,
 				    ROCCAT_LED_MAX);
 
-	ratbag_device_for_each_profile(device, profile)
+	ghostcat_device_for_each_profile(device, profile)
 		roccat_read_profile(profile);
 
 	active_idx = roccat_current_profile(device);
@@ -776,34 +776,34 @@ roccat_probe(struct ratbag_device *device)
 
 	log_raw(device->ratbag,
 		"'%s' is in profile %d\n",
-		ratbag_device_get_name(device),
+		ghostcat_device_get_name(device),
 		profile->index);
 
 	return 0;
 
 err:
 	free(drv_data);
-	ratbag_set_drv_data(device, NULL);
+	ghostcat_set_drv_data(device, NULL);
 	return rc;
 }
 
 static void
-roccat_remove(struct ratbag_device *device)
+roccat_remove(struct ghostcat_device *device)
 {
-	ratbag_close_hidraw(device);
-	free(ratbag_get_drv_data(device));
+	ghostcat_close_hidraw(device);
+	free(ghostcat_get_drv_data(device));
 }
 
 static int
-roccat_commit(struct ratbag_device *device)
+roccat_commit(struct ghostcat_device *device)
 {
 
 	int rc = 0;
-	struct ratbag_button *button = NULL;
-	struct ratbag_profile *profile = NULL;
-	struct ratbag_resolution *resolution = NULL;
+	struct ghostcat_button *button = NULL;
+	struct ghostcat_profile *profile = NULL;
+	struct ghostcat_resolution *resolution = NULL;
 
-	ratbag_device_for_each_profile(device, profile) {
+	ghostcat_device_for_each_profile(device, profile) {
 		if (!profile->dirty)
 			continue;
 
@@ -811,7 +811,7 @@ roccat_commit(struct ratbag_device *device)
 		if (rc)
 			return rc;
 
-		ratbag_profile_for_each_resolution(profile, resolution) {
+		ghostcat_profile_for_each_resolution(profile, resolution) {
 			if (!resolution->dirty)
 				continue;
 
@@ -820,7 +820,7 @@ roccat_commit(struct ratbag_device *device)
 				return rc;
 		}
 
-		ratbag_profile_for_each_button(profile, button) {
+		ghostcat_profile_for_each_button(profile, button) {
 			if (!button->dirty)
 				continue;
 
@@ -833,7 +833,7 @@ roccat_commit(struct ratbag_device *device)
 	return 0;
 }
 
-struct ratbag_driver roccat_kone_pure_driver = {
+struct ghostcat_driver roccat_kone_pure_driver = {
 	.name = "Roccat Kone Pure",
 	.id = "roccat-kone-pure",
 	.probe = roccat_probe,

@@ -150,7 +150,7 @@ sudo ninja -C builddir install
 sudo systemctl restart ratbagd
 ```
 
-### Build Piper
+### Build GhostCAT
 ```bash
 cd piper
 meson setup builddir

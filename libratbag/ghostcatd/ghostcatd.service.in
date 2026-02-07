@@ -1,0 +1,11 @@
+[Unit]
+Description=Daemon to introspect and modify configurable mice
+
+[Service]
+Type=dbus
+BusName=org.freedesktop.ghostcat1
+ExecStart=@sbindir@/ghostcatd
+Restart=on-abort
+
+[Install]
+Alias=dbus-org.freedesktop.ghostcat1.service

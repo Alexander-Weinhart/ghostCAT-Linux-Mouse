@@ -42,7 +42,7 @@
 
 #define MAX_MACRO_EVENTS 256
 
-LIBRATBAG_ATTRIBUTE_PRINTF(1, 2)
+LIBGHOSTCAT_ATTRIBUTE_PRINTF(1, 2)
 static inline void
 error(const char *format, ...)
 {
@@ -59,27 +59,27 @@ struct udev_device*
 udev_device_from_path(struct udev *udev, const char *path);
 
 const char *
-led_mode_to_str(enum ratbag_led_mode mode);
+led_mode_to_str(enum ghostcat_led_mode mode);
 
 const char *
-button_action_special_to_str(struct ratbag_button *button);
+button_action_special_to_str(struct ghostcat_button *button);
 
 char *
-button_action_button_to_str(struct ratbag_button *button);
+button_action_button_to_str(struct ghostcat_button *button);
 
 char *
-button_action_key_to_str(struct ratbag_button *button);
+button_action_key_to_str(struct ghostcat_button *button);
 
 char *
-button_action_to_str(struct ratbag_button *button);
+button_action_to_str(struct ghostcat_button *button);
 
 char *
-button_action_macro_to_str(struct ratbag_button *button);
+button_action_macro_to_str(struct ghostcat_button *button);
 
-enum ratbag_button_action_special
+enum ghostcat_button_action_special
 str_to_special_action(const char *str);
 
-struct ratbag_device *
-ratbag_cmd_open_device(struct ratbag *ratbag, const char *path);
+struct ghostcat_device *
+ghostcat_cmd_open_device(struct ghostcat *ratbag, const char *path);
 
-extern const struct ratbag_interface interface;
+extern const struct ghostcat_interface interface;

@@ -55,13 +55,13 @@ def import_non_standard_path(name, path):
     return module
 
 
-def start_ratbagd(verbosity=0):
+def start_ghostcatd(verbosity=0):
     from gi.repository import Gio
     import time
 
-    # FIXME: kill any running ratbagd.devel
+    # FIXME: kill any running ghostcatd.devel
 
-    args = [os.path.join("@MESON_BUILD_ROOT@", "ratbagd.devel")]
+    args = [os.path.join("@MESON_BUILD_ROOT@", "ghostcatd.devel")]
 
     if verbosity >= 3:
         args.append("--verbose")
@@ -70,7 +70,7 @@ def start_ratbagd(verbosity=0):
     elif verbosity == 0:
         args.append("--quiet")
 
-    ratbagd_process = subprocess.Popen(
+    ghostcatd_process = subprocess.Popen(
         args, shell=False, stdout=sys.stdout, stderr=sys.stderr
     )
 
@@ -94,19 +94,19 @@ def start_ratbagd(verbosity=0):
 
     os.environ["RATBAG_TEST"] = "1"
 
-    if name_owner is None or ratbagd_process.poll() is not None:
+    if name_owner is None or ghostcatd_process.poll() is not None:
         return None
 
-    return ratbagd_process
+    return ghostcatd_process
 
 
-def terminate_ratbagd(ratbagd):
-    if ratbagd is not None:
+def terminate_ghostcatd(ghostcatd):
+    if ghostcatd is not None:
         try:
-            ratbagd.terminate()
-            ratbagd.wait(5)
+            ghostcatd.terminate()
+            ghostcatd.wait(5)
         except subprocess.TimeoutExpired:
-            ratbagd.kill()
+            ghostcatd.kill()
 
 
 def sync_dbus():
@@ -121,15 +121,15 @@ from ratbagctl import (  # noqa: E402
     RatbagError,
     RatbagCapabilityError,
     get_parser,
-    open_ratbagd,
+    open_ghostcatd,
 )
 
 __all__ = [
     RATBAGCTL_NAME,
     RATBAGCTL_PATH,
-    start_ratbagd,
-    terminate_ratbagd,
-    open_ratbagd,
+    start_ghostcatd,
+    terminate_ghostcatd,
+    open_ghostcatd,
     get_parser,
     RatbagError,
     RatbagCapabilityError,

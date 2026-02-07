@@ -2,7 +2,7 @@
 
 struct marsgaming_button_action_mapping {
 	enum marsgaming_button_action marsgaming_action_id;
-	struct ratbag_button_action ratbag_action;
+	struct ghostcat_button_action ghostcat_action;
 };
 
 /**
@@ -17,50 +17,50 @@ static const struct marsgaming_button_action_mapping marsgaming_mm4_button_actio
 	{ MARSGAMING_MM4_ACTION_MIDDLE_CLICK, BUTTON_ACTION_BUTTON(3) },
 	{ MARSGAMING_MM4_ACTION_BACKWARD, BUTTON_ACTION_BUTTON(4) },
 	{ MARSGAMING_MM4_ACTION_FORWARD, BUTTON_ACTION_BUTTON(5) },
-	{ MARSGAMING_MM4_ACTION_DPI_SWITCH, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
-	{ MARSGAMING_MM4_ACTION_DPI_MINUS, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
-	{ MARSGAMING_MM4_ACTION_DPI_PLUS, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
-	{ MARSGAMING_MM4_ACTION_PROFILE_SWITCH, BUTTON_ACTION_SPECIAL(RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) }
+	{ MARSGAMING_MM4_ACTION_DPI_SWITCH, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP) },
+	{ MARSGAMING_MM4_ACTION_DPI_MINUS, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN) },
+	{ MARSGAMING_MM4_ACTION_DPI_PLUS, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP) },
+	{ MARSGAMING_MM4_ACTION_PROFILE_SWITCH, BUTTON_ACTION_SPECIAL(GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP) }
 };
 
-static struct ratbag_button_action
-marsgaming_button_action_lookup(struct ratbag_button *button,
+static struct ghostcat_button_action
+marsgaming_button_action_lookup(struct ghostcat_button *button,
 				const struct marsgaming_button_info *button_info)
 {
 	const struct marsgaming_button_action_mapping *button_mapping;
 	ARRAY_FOR_EACH(marsgaming_mm4_button_action_mapping, button_mapping) {
 		if (button_mapping->marsgaming_action_id == button_info->action)
-			return button_mapping->ratbag_action;
+			return button_mapping->ghostcat_action;
 	}
-	return (struct ratbag_button_action)BUTTON_ACTION_UNKNOWN;
+	return (struct ghostcat_button_action)BUTTON_ACTION_UNKNOWN;
 }
 
-static struct ratbag_button_action
-marsgaming_button_action_media(struct ratbag_button *button,
+static struct ghostcat_button_action
+marsgaming_button_action_media(struct ghostcat_button *button,
 			       const struct marsgaming_button_info *button_info)
 {
 	// TODO: Convert from marsgaming media to ratbag media key codes
-	return (struct ratbag_button_action)BUTTON_ACTION_UNKNOWN;
+	return (struct ghostcat_button_action)BUTTON_ACTION_UNKNOWN;
 }
 
 static int
-marsgaming_ratbag_button_macro_from_combo_keycode(struct ratbag_button *button, unsigned int key0, unsigned int key1, unsigned int modifiers);
+marsgaming_ghostcat_button_macro_from_combo_keycode(struct ghostcat_button *button, unsigned int key0, unsigned int key1, unsigned int modifiers);
 
-static struct ratbag_button_action
-marsgaming_button_action_key(struct ratbag_button *button,
+static struct ghostcat_button_action
+marsgaming_button_action_key(struct ghostcat_button *button,
 			     const struct marsgaming_button_info *button_info)
 {
 	// Single and combo keys share some structure, so we will treat them all like combo keys
 	const uint8_t mods = button_info->action_info.combo_key.modifiers;
 	const uint8_t key0 = button_info->action_info.combo_key.keys[0];
 	const uint8_t key1 = button_info->action_info.combo_key.keys[1];
-	const unsigned int event_key0 = ratbag_hidraw_get_keycode_from_keyboard_usage(button->profile->device, key0);
+	const unsigned int event_key0 = ghostcat_hidraw_get_keycode_from_keyboard_usage(button->profile->device, key0);
 	if (key1 == 0) {
-		ratbag_button_macro_new_from_keycode(button, event_key0, mods);
+		ghostcat_button_macro_new_from_keycode(button, event_key0, mods);
 		return button->action;
 	}
-	const unsigned int event_key1 = ratbag_hidraw_get_keycode_from_keyboard_usage(button->profile->device, key1);
-	marsgaming_ratbag_button_macro_from_combo_keycode(button, event_key0, event_key1, mods);
+	const unsigned int event_key1 = ghostcat_hidraw_get_keycode_from_keyboard_usage(button->profile->device, key1);
+	marsgaming_ghostcat_button_macro_from_combo_keycode(button, event_key0, event_key1, mods);
 	return button->action;
 }
 
@@ -92,67 +92,67 @@ static const struct marsgaming_modifier_mapping marsgaming_modifier_mapping[] = 
 };
 
 static int
-marsgaming_ratbag_button_macro_from_combo_keycode(struct ratbag_button *button, unsigned int key0, unsigned int key1, unsigned int modifiers)
+marsgaming_ghostcat_button_macro_from_combo_keycode(struct ghostcat_button *button, unsigned int key0, unsigned int key1, unsigned int modifiers)
 {
 	const struct marsgaming_modifier_mapping *mapping;
-	struct ratbag_button_macro *macro = ratbag_button_macro_new("combo-key");
+	struct ghostcat_button_macro *macro = ghostcat_button_macro_new("combo-key");
 	int i = 0;
 
 	ARRAY_FOR_EACH(marsgaming_modifier_mapping, mapping) {
 		if (modifiers & mapping->modifier_mask) {
-			ratbag_button_macro_set_event(macro,
+			ghostcat_button_macro_set_event(macro,
 						      i++,
-						      RATBAG_MACRO_EVENT_KEY_PRESSED,
+						      GHOSTCAT_MACRO_EVENT_KEY_PRESSED,
 						      mapping->key);
 		}
 	}
 
-	ratbag_button_macro_set_event(macro,
+	ghostcat_button_macro_set_event(macro,
 				      i++,
-				      RATBAG_MACRO_EVENT_KEY_PRESSED,
+				      GHOSTCAT_MACRO_EVENT_KEY_PRESSED,
 				      key0);
-	ratbag_button_macro_set_event(macro,
+	ghostcat_button_macro_set_event(macro,
 				      i++,
-				      RATBAG_MACRO_EVENT_KEY_PRESSED,
+				      GHOSTCAT_MACRO_EVENT_KEY_PRESSED,
 				      key1);
-	ratbag_button_macro_set_event(macro,
+	ghostcat_button_macro_set_event(macro,
 				      i++,
-				      RATBAG_MACRO_EVENT_KEY_RELEASED,
+				      GHOSTCAT_MACRO_EVENT_KEY_RELEASED,
 				      key1);
-	ratbag_button_macro_set_event(macro,
+	ghostcat_button_macro_set_event(macro,
 				      i++,
-				      RATBAG_MACRO_EVENT_KEY_RELEASED,
+				      GHOSTCAT_MACRO_EVENT_KEY_RELEASED,
 				      key0);
 
 	ARRAY_FOR_EACH(marsgaming_modifier_mapping, mapping) {
 		if (modifiers & mapping->modifier_mask) {
-			ratbag_button_macro_set_event(macro,
+			ghostcat_button_macro_set_event(macro,
 						      i++,
-						      RATBAG_MACRO_EVENT_KEY_RELEASED,
+						      GHOSTCAT_MACRO_EVENT_KEY_RELEASED,
 						      mapping->key);
 		}
 	}
 
-	ratbag_button_copy_macro(button, macro);
-	ratbag_button_macro_unref(macro);
+	ghostcat_button_copy_macro(button, macro);
+	ghostcat_button_macro_unref(macro);
 
 	return 0;
 }
 
-static struct ratbag_button_action
-marsgaming_button_action_macro(struct ratbag_button *button,
+static struct ghostcat_button_action
+marsgaming_button_action_macro(struct ghostcat_button *button,
 			       const struct marsgaming_button_info *button_info)
 {
 	// TODO: Create a ratbag macro from the marsgaming macro
-	return (struct ratbag_button_action)BUTTON_ACTION_UNKNOWN;
+	return (struct ghostcat_button_action)BUTTON_ACTION_UNKNOWN;
 }
 
-static struct ratbag_button_action
-marsgaming_button_action_fire(struct ratbag_button *button,
+static struct ghostcat_button_action
+marsgaming_button_action_fire(struct ghostcat_button *button,
 			      const struct marsgaming_button_info *button_info)
 {
 	// There's no way to convert this to ratbag structs, so we'll return unknown
-	return (struct ratbag_button_action)BUTTON_ACTION_UNKNOWN;
+	return (struct ghostcat_button_action)BUTTON_ACTION_UNKNOWN;
 }
 
 #define MARSGAMING_BUTTON_ACTION_NONE                                                   \
@@ -161,17 +161,17 @@ marsgaming_button_action_fire(struct ratbag_button *button,
 	}
 
 static struct marsgaming_button_info
-marsgaming_from_ratbag_to_action_none(struct ratbag_button *button)
+marsgaming_from_ghostcat_to_action_none(struct ghostcat_button *button)
 {
 	return (struct marsgaming_button_info)MARSGAMING_BUTTON_ACTION_NONE;
 }
 
-struct marsgaming_from_ratbag_to_button_map {
+struct marsgaming_from_ghostcat_to_button_map {
 	uint8_t button_id;
 	struct marsgaming_button_info button_info;
 };
 
-static const struct marsgaming_from_ratbag_to_button_map marsgaming_from_ratbag_to_button_maps[] = {
+static const struct marsgaming_from_ghostcat_to_button_map marsgaming_from_ghostcat_to_button_maps[] = {
 	{ 1, { .action = MARSGAMING_MM4_ACTION_LEFT_CLICK } },
 	{ 2, { .action = MARSGAMING_MM4_ACTION_RIGHT_CLICK } },
 	{ 3, { .action = MARSGAMING_MM4_ACTION_MIDDLE_CLICK } },
@@ -180,35 +180,35 @@ static const struct marsgaming_from_ratbag_to_button_map marsgaming_from_ratbag_
 };
 
 static struct marsgaming_button_info
-marsgaming_from_ratbag_to_action_button(struct ratbag_button *button)
+marsgaming_from_ghostcat_to_action_button(struct ghostcat_button *button)
 {
 	const unsigned int button_id = button->action.action.button;
-	const struct marsgaming_from_ratbag_to_button_map *map;
-	ARRAY_FOR_EACH(marsgaming_from_ratbag_to_button_maps, map) {
+	const struct marsgaming_from_ghostcat_to_button_map *map;
+	ARRAY_FOR_EACH(marsgaming_from_ghostcat_to_button_maps, map) {
 		if (button_id == map->button_id)
 			return map->button_info;
 	}
 	return (struct marsgaming_button_info)MARSGAMING_BUTTON_ACTION_NONE;
 }
 
-struct marsgaming_from_ratbag_to_special_map {
-	enum ratbag_button_action_special special_id;
+struct marsgaming_from_ghostcat_to_special_map {
+	enum ghostcat_button_action_special special_id;
 	struct marsgaming_button_info button_info;
 };
 
-static const struct marsgaming_from_ratbag_to_special_map marsgaming_from_ratbag_to_special_maps[] = {
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP, { .action = MARSGAMING_MM4_ACTION_DPI_SWITCH } },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN, { .action = MARSGAMING_MM4_ACTION_DPI_MINUS } },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_RESOLUTION_UP, { .action = MARSGAMING_MM4_ACTION_DPI_PLUS } },
-	{ RATBAG_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP, { .action = MARSGAMING_MM4_ACTION_PROFILE_SWITCH } },
+static const struct marsgaming_from_ghostcat_to_special_map marsgaming_from_ghostcat_to_special_maps[] = {
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_CYCLE_UP, { .action = MARSGAMING_MM4_ACTION_DPI_SWITCH } },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_DOWN, { .action = MARSGAMING_MM4_ACTION_DPI_MINUS } },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_RESOLUTION_UP, { .action = MARSGAMING_MM4_ACTION_DPI_PLUS } },
+	{ GHOSTCAT_BUTTON_ACTION_SPECIAL_PROFILE_CYCLE_UP, { .action = MARSGAMING_MM4_ACTION_PROFILE_SWITCH } },
 };
 
 static struct marsgaming_button_info
-marsgaming_from_ratbag_to_action_special(struct ratbag_button *button)
+marsgaming_from_ghostcat_to_action_special(struct ghostcat_button *button)
 {
-	const enum ratbag_button_action_special special_type = button->action.action.special;
-	const struct marsgaming_from_ratbag_to_special_map *map;
-	ARRAY_FOR_EACH(marsgaming_from_ratbag_to_special_maps, map) {
+	const enum ghostcat_button_action_special special_type = button->action.action.special;
+	const struct marsgaming_from_ghostcat_to_special_map *map;
+	ARRAY_FOR_EACH(marsgaming_from_ghostcat_to_special_maps, map) {
 		if (special_type == map->special_id)
 			return map->button_info;
 	}
@@ -216,22 +216,22 @@ marsgaming_from_ratbag_to_action_special(struct ratbag_button *button)
 }
 
 static int
-marsgaming_keycodes_from_ratbag_macro(struct ratbag_button_action *action, unsigned int *key0_out, unsigned int *key1_out, unsigned int *mods_out);
+marsgaming_keycodes_from_ghostcat_macro(struct ghostcat_button_action *action, unsigned int *key0_out, unsigned int *key1_out, unsigned int *mods_out);
 
 static struct marsgaming_button_info
-marsgaming_from_ratbag_to_action_macro(struct ratbag_button *button)
+marsgaming_from_ghostcat_to_action_macro(struct ghostcat_button *button)
 {
 	unsigned int key0;
 	unsigned int key1;
 	unsigned int mods;
-	int e = marsgaming_keycodes_from_ratbag_macro(&button->action, &key0, &key1, &mods);
+	int e = marsgaming_keycodes_from_ghostcat_macro(&button->action, &key0, &key1, &mods);
 	if (e == 1 || e == 2) { // We can convert this to 2-key combo
 		return (struct marsgaming_button_info){
 			.action = MARSGAMING_MM4_ACTION_COMBO_KEY,
 			.action_info.combo_key = {
 				.modifiers = mods,
-				.keys[0] = ratbag_hidraw_get_keyboard_usage_from_keycode(button->profile->device, key0),
-				.keys[1] = ratbag_hidraw_get_keyboard_usage_from_keycode(button->profile->device, key1),
+				.keys[0] = ghostcat_hidraw_get_keyboard_usage_from_keycode(button->profile->device, key0),
+				.keys[1] = ghostcat_hidraw_get_keyboard_usage_from_keycode(button->profile->device, key1),
 			}
 
 		};
@@ -241,37 +241,37 @@ marsgaming_from_ratbag_to_action_macro(struct ratbag_button *button)
 }
 
 static int
-marsgaming_keycodes_from_ratbag_macro(struct ratbag_button_action *action, unsigned int *key0_out, unsigned int *key1_out, unsigned int *modifiers_out)
+marsgaming_keycodes_from_ghostcat_macro(struct ghostcat_button_action *action, unsigned int *key0_out, unsigned int *key1_out, unsigned int *modifiers_out)
 {
-	struct ratbag_macro *macro = action->macro;
+	struct ghostcat_macro *macro = action->macro;
 	unsigned int key0 = KEY_RESERVED;
 	unsigned int key1 = KEY_RESERVED;
 	unsigned int modifiers = 0;
 	unsigned int i;
 	unsigned int keys_pressed = 0;
 
-	if (!macro || action->type != RATBAG_BUTTON_ACTION_TYPE_MACRO)
+	if (!macro || action->type != GHOSTCAT_BUTTON_ACTION_TYPE_MACRO)
 		return -EINVAL;
 
-	if (macro->events[0].type == RATBAG_MACRO_EVENT_NONE)
+	if (macro->events[0].type == GHOSTCAT_MACRO_EVENT_NONE)
 		return -EINVAL;
 
 	{
-		unsigned int num_keys = ratbag_action_macro_num_keys(action);
+		unsigned int num_keys = ghostcat_action_macro_num_keys(action);
 		if (num_keys == 0 || num_keys > 2)
 			return -EINVAL;
 	}
 
 	for (i = 0; i < MAX_MACRO_EVENTS; i++) {
-		struct ratbag_macro_event event;
+		struct ghostcat_macro_event event;
 
 		event = macro->events[i];
 		switch (event.type) {
-		case RATBAG_MACRO_EVENT_INVALID:
+		case GHOSTCAT_MACRO_EVENT_INVALID:
 			return -EINVAL;
-		case RATBAG_MACRO_EVENT_NONE:
+		case GHOSTCAT_MACRO_EVENT_NONE:
 			return 0;
-		case RATBAG_MACRO_EVENT_KEY_PRESSED:
+		case GHOSTCAT_MACRO_EVENT_KEY_PRESSED:
 			switch (event.event.key) {
 			case KEY_LEFTCTRL: modifiers |= MARSGAMING_MODIFIER_LEFTCTRL; break;
 			case KEY_LEFTSHIFT: modifiers |= MARSGAMING_MODIFIER_LEFTSHIFT; break;
@@ -292,7 +292,7 @@ marsgaming_keycodes_from_ratbag_macro(struct ratbag_button_action *action, unsig
 				++keys_pressed;
 			}
 			break;
-		case RATBAG_MACRO_EVENT_KEY_RELEASED:
+		case GHOSTCAT_MACRO_EVENT_KEY_RELEASED:
 			switch (event.event.key) {
 			case KEY_LEFTCTRL: modifiers &= ~MARSGAMING_MODIFIER_LEFTCTRL; break;
 			case KEY_LEFTSHIFT: modifiers &= ~MARSGAMING_MODIFIER_LEFTSHIFT; break;
@@ -313,7 +313,7 @@ marsgaming_keycodes_from_ratbag_macro(struct ratbag_button_action *action, unsig
 
 				return -EINVAL;
 			}
-		case RATBAG_MACRO_EVENT_WAIT:
+		case GHOSTCAT_MACRO_EVENT_WAIT:
 			break;
 		default:
 			return -EINVAL;
@@ -323,13 +323,13 @@ marsgaming_keycodes_from_ratbag_macro(struct ratbag_button_action *action, unsig
 	return -EINVAL;
 }
 
-struct marsgaming_button_action_to_ratbag_parser {
+struct marsgaming_button_action_to_ghostcat_parser {
 	enum marsgaming_button_action marsgaming_action_id;
-	struct ratbag_button_action (*parse_action)(struct ratbag_button *button,
+	struct ghostcat_button_action (*parse_action)(struct ghostcat_button *button,
 						    const struct marsgaming_button_info *button_info);
 };
 
-static const struct marsgaming_button_action_to_ratbag_parser marsgaming_button_action_to_ratbag_parsers[] = {
+static const struct marsgaming_button_action_to_ghostcat_parser marsgaming_button_action_to_ghostcat_parsers[] = {
 	{ MARSGAMING_MM4_ACTION_LEFT_CLICK, marsgaming_button_action_lookup },
 	{ MARSGAMING_MM4_ACTION_RIGHT_CLICK, marsgaming_button_action_lookup },
 	{ MARSGAMING_MM4_ACTION_MIDDLE_CLICK, marsgaming_button_action_lookup },
@@ -346,38 +346,38 @@ static const struct marsgaming_button_action_to_ratbag_parser marsgaming_button_
 	{ MARSGAMING_MM4_ACTION_FIRE, marsgaming_button_action_fire },
 };
 
-struct ratbag_button_action
-marsgaming_parse_button_to_action(struct ratbag_button *button,
+struct ghostcat_button_action
+marsgaming_parse_button_to_action(struct ghostcat_button *button,
 				  const struct marsgaming_button_info *button_info)
 {
-	const struct marsgaming_button_action_to_ratbag_parser *parser;
-	ARRAY_FOR_EACH(marsgaming_button_action_to_ratbag_parsers, parser) {
+	const struct marsgaming_button_action_to_ghostcat_parser *parser;
+	ARRAY_FOR_EACH(marsgaming_button_action_to_ghostcat_parsers, parser) {
 		if (button_info->action == parser->marsgaming_action_id)
 			return parser->parse_action(button, button_info);
 	}
 	// If no action matches, set it to unknown
-	return (struct ratbag_button_action)BUTTON_ACTION_UNKNOWN;
+	return (struct ghostcat_button_action)BUTTON_ACTION_UNKNOWN;
 }
 
-struct marsgaming_from_ratbag_button_action_to_parser {
-	enum ratbag_button_action_type ratbag_action_type;
-	struct marsgaming_button_info (*parse_action)(struct ratbag_button *button);
+struct marsgaming_from_ghostcat_button_action_to_parser {
+	enum ghostcat_button_action_type ghostcat_action_type;
+	struct marsgaming_button_info (*parse_action)(struct ghostcat_button *button);
 };
 
-static const struct marsgaming_from_ratbag_button_action_to_parser marsgaming_button_action_to_marsgaming_parsers[] = {
-	{ RATBAG_BUTTON_ACTION_TYPE_NONE, marsgaming_from_ratbag_to_action_none },
-	{ RATBAG_BUTTON_ACTION_TYPE_BUTTON, marsgaming_from_ratbag_to_action_button },
-	{ RATBAG_BUTTON_ACTION_TYPE_SPECIAL, marsgaming_from_ratbag_to_action_special },
-	{ RATBAG_BUTTON_ACTION_TYPE_MACRO, marsgaming_from_ratbag_to_action_macro },
-	{ RATBAG_BUTTON_ACTION_TYPE_UNKNOWN, marsgaming_from_ratbag_to_action_none },
+static const struct marsgaming_from_ghostcat_button_action_to_parser marsgaming_button_action_to_marsgaming_parsers[] = {
+	{ GHOSTCAT_BUTTON_ACTION_TYPE_NONE, marsgaming_from_ghostcat_to_action_none },
+	{ GHOSTCAT_BUTTON_ACTION_TYPE_BUTTON, marsgaming_from_ghostcat_to_action_button },
+	{ GHOSTCAT_BUTTON_ACTION_TYPE_SPECIAL, marsgaming_from_ghostcat_to_action_special },
+	{ GHOSTCAT_BUTTON_ACTION_TYPE_MACRO, marsgaming_from_ghostcat_to_action_macro },
+	{ GHOSTCAT_BUTTON_ACTION_TYPE_UNKNOWN, marsgaming_from_ghostcat_to_action_none },
 };
 
 struct marsgaming_optional_button_info
-marsgaming_button_of_type(struct ratbag_button *button)
+marsgaming_button_of_type(struct ghostcat_button *button)
 {
-	const struct marsgaming_from_ratbag_button_action_to_parser *parser;
+	const struct marsgaming_from_ghostcat_button_action_to_parser *parser;
 	ARRAY_FOR_EACH(marsgaming_button_action_to_marsgaming_parsers, parser) {
-		if (button->action.type != parser->ratbag_action_type)
+		if (button->action.type != parser->ghostcat_action_type)
 			continue;
 		return (struct marsgaming_optional_button_info){
 			.is_present = 1,

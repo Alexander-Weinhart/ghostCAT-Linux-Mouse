@@ -28,15 +28,15 @@ from typing import TextIO
 
 
 def write_ratbagctl(
-    output_file: TextIO, ratbagctl_path: str, ratbagd_path: str, version_string: str
+    output_file: TextIO, ratbagctl_path: str, ghostcatd_path: str, version_string: str
 ) -> None:
     with open(ratbagctl_path, encoding="utf-8") as ratbagctl, open(
-        ratbagd_path, encoding="utf-8"
-    ) as ratbagd:
+        ghostcatd_path, encoding="utf-8"
+    ) as ghostcatd:
         for line in ratbagctl.readlines():
-            if line.startswith("from ratbagd import "):
+            if line.startswith("from ghostcatd import "):
                 headers = True
-                for r in ratbagd.readlines():
+                for r in ghostcatd.readlines():
                     if not r.startswith("#") and r.strip():
                         headers = False
                     if not headers:
@@ -51,9 +51,9 @@ def write_ratbagctl(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="merge ratbagd.py into ratbagctl")
+    parser = argparse.ArgumentParser(description="merge ghostcatd.py into ratbagctl")
     parser.add_argument("ratbagctl", action="store")
-    parser.add_argument("ratbagd", action="store")
+    parser.add_argument("ghostcatd", action="store")
     parser.add_argument("--output", action="store")
     parser.add_argument("--version", action="store", default="git_master")
     ns = parser.parse_args()
@@ -61,7 +61,7 @@ def main() -> None:
         with open(ns.output, "w", encoding="utf-8") as output_file:
             st = os.stat(ns.output)
             os.chmod(ns.output, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-            write_ratbagctl(output_file, ns.ratbagctl, ns.ratbagd, ns.version)
+            write_ratbagctl(output_file, ns.ratbagctl, ns.ghostcatd, ns.version)
 
 
 if __name__ == "__main__":

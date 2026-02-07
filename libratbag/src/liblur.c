@@ -34,7 +34,7 @@
 
 #include "usb-ids.h"
 #include "hidpp10.h"
-#include "libratbag-util.h"
+#include "libghostcat-util.h"
 #include "liblur.h"
 
 #define _EXPORT_ __attribute__ ((visibility("default")))

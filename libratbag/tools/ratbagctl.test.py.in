@@ -44,7 +44,7 @@ class TestRatbagCtl(unittest.TestCase):
         super().setUpClass()
 
         # it's a lot easier to debug a validation failure here than
-        # with ratbagd failing
+        # with ghostcatd failing
         if cls.json is not None:
             import json
 
@@ -73,7 +73,7 @@ class TestRatbagCtl(unittest.TestCase):
 
     @classmethod
     def run_ratbagctl_fast(cls, params):
-        global parser, ratbagd
+        global parser, ghostcatd
         stdout = sys.stdout
         stderr = sys.stderr
         returncode = 0
@@ -82,7 +82,7 @@ class TestRatbagCtl(unittest.TestCase):
         sys.stderr = io.StringIO()
         try:
             cmd = parser.parse(params.split())
-            cmd.func(ratbagd, cmd)
+            cmd.func(ghostcatd, cmd)
         except SystemExit as e:
             returncode = e.code
         except AttributeError:
@@ -95,7 +95,7 @@ class TestRatbagCtl(unittest.TestCase):
         error = sys.stderr.getvalue()
         sys.stdout = stdout
         sys.stderr = stderr
-        # Small delay as we may not get an updated state on time from ratbagd.
+        # Small delay as we may not get an updated state on time from ghostcatd.
         time.sleep(0.001)
         toolbox.sync_dbus()
         return returncode, output.rstrip("\n"), error.rstrip("\n")
@@ -109,14 +109,14 @@ class TestRatbagCtl(unittest.TestCase):
 
     @classmethod
     def reset_test_device(cls):
-        global ratbagd
-        ratbagd._dbus_call("ResetTestDevice", "")
+        global ghostcatd
+        ghostcatd._dbus_call("ResetTestDevice", "")
         toolbox.sync_dbus()
 
     @classmethod
     def load_test_device(cls, json):
-        global ratbagd
-        rc = ratbagd._dbus_call("LoadTestDevice", "s", json)
+        global ghostcatd
+        rc = ghostcatd._dbus_call("LoadTestDevice", "s", json)
         assert rc == 0
         toolbox.sync_dbus()
 
@@ -879,50 +879,50 @@ class TestRatbagCtlLED(TestRatbagCtl):
 
 
 def setUpModule():
-    global ratbagd_process, ratbagd, parser
+    global ghostcatd_process, ghostcatd, parser
 
-    ratbagd_process = None
-    if start_ratbagd:
-        ratbagd_process = toolbox.start_ratbagd()
-        assert ratbagd_process is not None
+    ghostcatd_process = None
+    if start_ghostcatd:
+        ghostcatd_process = toolbox.start_ghostcatd()
+        assert ghostcatd_process is not None
 
     try:
-        ratbagd = toolbox.open_ratbagd(ratbagd_process)
-        assert ratbagd is not None
+        ghostcatd = toolbox.open_ghostcatd(ghostcatd_process)
+        assert ghostcatd is not None
     except Exception as e:
-        if ratbagd_process is not None:
-            toolbox.terminate_ratbagd(ratbagd_process)
+        if ghostcatd_process is not None:
+            toolbox.terminate_ghostcatd(ghostcatd_process)
         raise e
 
     parser = toolbox.get_parser()
 
 
 def tearDownModule():
-    global ratbagd_process
+    global ghostcatd_process
 
-    if start_ratbagd:
-        toolbox.terminate_ratbagd(ratbagd_process)
+    if start_ghostcatd:
+        toolbox.terminate_ghostcatd(ghostcatd_process)
 
 
 def parse(input_string):
-    global run_ratbagctl_in_subprocess, start_ratbagd
+    global run_ratbagctl_in_subprocess, start_ghostcatd
 
     parser_test = argparse.ArgumentParser(
-        description="Testsuite for ratbagd/ratbagctl", add_help=False
+        description="Testsuite for ghostcatd/ratbagctl", add_help=False
     )
     parser_test.add_argument("--subprocess", action="store_true", default=False)
     parser_test.add_argument(
-        "--use-existing-ratbagd",
+        "--use-existing-ghostcatd",
         dest="use_existing",
         action="store_true",
         default=False,
-        help="Don't start up ratbagd.devel, connect to the already running one",
+        help="Don't start up ghostcatd.devel, connect to the already running one",
     )
     ns, rest = parser_test.parse_known_args(input_string)
     run_ratbagctl_in_subprocess = ns.subprocess
-    start_ratbagd = not ns.use_existing
+    start_ghostcatd = not ns.use_existing
 
-    if start_ratbagd and os.geteuid() != 0:
+    if start_ghostcatd and os.geteuid() != 0:
         print("Script must be run as root", file=sys.stderr)
         sys.exit(77)
 
