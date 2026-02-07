@@ -1,0 +1,54 @@
+name: linux
+
+on: [ push, pull_request ]
+
+env:
+  UBUNTU_DEP_BUILD: |
+    gcc g++ pkg-config systemd libevdev-dev libglib2.0-dev
+    libjson-glib-dev libsystemd-dev libudev-dev libunistring-dev
+    python3-dev python3-evdev swig python3-sphinx
+  UBUNTU_DEP_TEST: check python3-gi python3-lxml valgrind
+  PIP_PACKAGES: meson ninja libevdev pyudev pytest sphinx_rtd_theme black ruff
+
+jobs:
+  build-and-dist:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - name: default
+            meson_args: ''
+          - name: plain
+            meson_args: '-Dbuildtype=plain'
+          - name: release
+            meson_args: '-Dbuildtype=release'
+          - name: documentation
+            meson_args: '-Ddocumentation=true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pkginstall
+        with:
+          apt: $UBUNTU_DEP_BUILD $UBUNTU_DEP_TEST
+          pip: $PIP_PACKAGES
+      - name: meson test ${{matrix.meson_args}}
+        uses: ./.github/actions/meson
+        with:
+          meson_args: --prefix=$PWD/_instdir ${{matrix.meson_args}}
+          ninja_args: install
+      - name: check installation of data files
+        run:  diff -u <(cd data/devices; ls *.device) <(cd _instdir/share/libratbag; ls *.device)
+      - name: ninja uninstall
+        uses: ./.github/actions/meson
+        with:
+          meson_args: --prefix=$PWD/_instdir
+          ninja_args: uninstall
+      - name: check if any files are left after uninstall
+        run: (test -d _instdir && tree _instdir && exit 1) || exit 0
+      # Capture all the meson logs, even if we failed
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}  # even if we fail
+        with:
+          name: 'meson test logs ${{ matrix.name }}'
+          path: |
+            builddir/meson-logs/testlog*.txt
+            builddir/meson-logs/meson-log.txt
