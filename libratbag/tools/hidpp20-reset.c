@@ -26,7 +26,7 @@
 #include <fcntl.h>
 
 #include <hidpp20.h>
-#include <libratbag-util.h>
+#include <libghostcat-util.h>
 
 static inline int
 reset_sector(struct hidpp20_device *dev, uint16_t sector_size,  uint16_t sector)

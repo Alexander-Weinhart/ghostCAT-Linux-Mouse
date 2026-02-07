@@ -34,7 +34,7 @@
 #include <limits.h>
 
 #include <liblur.h>
-#include <libratbag-util.h>
+#include <libghostcat-util.h>
 
 enum options {
 	OPT_HELP,

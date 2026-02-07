@@ -147,22 +147,22 @@ cd libratbag
 meson setup builddir
 ninja -C builddir
 sudo ninja -C builddir install
-sudo systemctl restart ratbagd
+sudo systemctl restart ghostcatd
 ```
 
 ### Build GhostCAT
 ```bash
-cd piper
+cd ghostcat
 meson setup builddir
 ninja -C builddir
-sudo cp builddir/data/piper.gresource /usr/local/share/piper/piper.gresource
+sudo cp builddir/data/ghostcat.gresource /usr/local/share/ghostcat/ghostcat.gresource
 ```
 
 ### Run
 ```bash
-cd piper
+cd ghostcat
 unset LD_LIBRARY_PATH
-PYTHONPATH=. python3 builddir/piper
+PYTHONPATH=. python3 builddir/ghostcat
 ```
 
 ---

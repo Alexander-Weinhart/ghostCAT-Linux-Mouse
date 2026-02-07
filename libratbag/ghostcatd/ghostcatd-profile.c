@@ -27,7 +27,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <libratbag.h>
+#include <libghostcat.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -180,11 +180,11 @@ This represents the complete state of modifications before the GhostCAT rebrand.
 These changes are planned for future commits:
 
 ### Rebrand Phase
-- [ ] Complete rename: `ratbag` → `ghostcat`, `ratbagd` → `ghostcatd`, `GhostCAT` → `GhostCAT`
-- [ ] D-Bus interface: `org.freedesktop.ratbag1` → `org.freedesktop.ghostcat1`
-- [ ] Python package: `piper` → `ghostcat`
-- [ ] All C function prefixes: `ratbag_` → `ghostcat_`
-- [ ] systemd service: `ratbagd.service` → `ghostcatd.service`
+- [x] Complete rename: `ratbag` → `ghostcat`, `ratbagd` → `ghostcatd`, `Piper` → `GhostCAT`
+- [x] D-Bus interface: `org.freedesktop.ratbag1` → `org.freedesktop.ghostcat1`
+- [x] Python package: `piper` → `ghostcat`
+- [x] All C function prefixes: `ratbag_` → `ghostcat_`
+- [x] systemd service: `ratbagd.service` → `ghostcatd.service`
 
 ### Feature Additions
 - [ ] GTK4 migration

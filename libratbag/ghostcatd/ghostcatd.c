@@ -30,7 +30,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <libgen.h>
-#include <libratbag.h>
+#include <libghostcat.h>
 #include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -27,7 +27,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <libratbag.h>
+#include <libghostcat.h>
 #include <systemd/sd-bus.h>
 #include "ghostcatd.h"
 #include "shared-macro.h"

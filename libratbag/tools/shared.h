@@ -36,8 +36,8 @@
 #include <sys/stat.h>
 #include <linux/input.h>
 
-#include <libratbag.h>
-#include <libratbag-util.h>
+#include <libghostcat.h>
+#include <libghostcat-util.h>
 #include <libevdev/libevdev.h>
 
 #define MAX_MACRO_EVENTS 256

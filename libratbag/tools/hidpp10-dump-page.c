@@ -26,7 +26,7 @@
 #include <fcntl.h>
 
 #include <hidpp10.h>
-#include <libratbag-util.h>
+#include <libghostcat-util.h>
 
 static inline int
 dump_page(struct hidpp10_device *dev, size_t page, size_t offset)

@@ -29,7 +29,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <libratbag.h>
+#include <libghostcat.h>
 #include <libudev.h>
 #include <stdbool.h>
 #include <stdlib.h>

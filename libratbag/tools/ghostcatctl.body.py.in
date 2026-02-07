@@ -34,7 +34,7 @@ from ghostcatd import Ratbagd, RatbagdDevice, RatbagdProfile, RatbagdMacro, Ratb
 # fmt: on
 
 
-RATBAGD_API_VERSION = int("@RATBAGD_API_VERSION@")
+GHOSTCATD_API_VERSION = int("@GHOSTCATD_API_VERSION@")
 
 
 def humanize(string: str) -> str:
@@ -1915,7 +1915,7 @@ def open_ghostcatd(
     ghostcatd_process: Optional[subprocess.Popen] = None, verbose: int = 0
 ) -> Optional[Ratbagd]:
     try:
-        ghostcatd = Ratbagd(RATBAGD_API_VERSION)
+        ghostcatd = Ratbagd(GHOSTCATD_API_VERSION)
         ghostcatd.verbose = verbose
         try:
             ghostcatd.connect("device-added", on_device_added)

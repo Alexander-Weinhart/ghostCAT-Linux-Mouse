@@ -50,13 +50,13 @@ add_project_arguments(cflags, language: 'c')
 # is generated at the end of this file
 config_h = configuration_data()
 config_h.set('_GNU_SOURCE', '1')
-config_h.set_quoted('RATBAG_VERSION', meson.project_version())
-config_h.set('RATBAGD_API_VERSION', ghostcatd_api_version)
+config_h.set_quoted('GHOSTCAT_VERSION', meson.project_version())
+config_h.set('GHOSTCATD_API_VERSION', ghostcatd_api_version)
 libghostcat_data_dir = join_paths(get_option('prefix'),
 				get_option('datadir'),
 				'libghostcat')
 libghostcat_data_dir_devel = join_paths(project_source_root, 'data', 'devices')
-config_h.set_quoted('LIBRATBAG_DATA_DIR', libghostcat_data_dir)
+config_h.set_quoted('LIBGHOSTCAT_DATA_DIR', libghostcat_data_dir)
 
 # dependencies
 pkgconfig = import('pkgconfig')
@@ -402,11 +402,11 @@ install_man('ghostcatd/ghostcatd.8')
 #### ghostcatd_devel ####
 #
 # A development ghostcatd server that owns a different name on the bus
-# (org.freedesktop.ratbag_devel1). This server is used by ghostcatdctl.devel.
+# (org.freedesktop.ghostcat_devel1). This server is used by ghostcatdctl.devel.
 #
 
-dbus_devel_policy = configure_file(input : 'dbus/org.freedesktop.ratbag_devel1.conf.in',
-				   output : 'org.freedesktop.ratbag_devel1.conf',
+dbus_devel_policy = configure_file(input : 'dbus/org.freedesktop.ghostcat_devel1.conf.in',
+				   output : 'org.freedesktop.ghostcat_devel1.conf',
 				   copy: true)
 
 # This is a hack. We always install the devel policy file into
@@ -422,8 +422,8 @@ executable('ghostcatd.devel',
 	   include_directories : include_directories('src'),
 	   install : false,
 	   c_args : ['-DRATBAG_DBUS_INTERFACE="ratbag_devel1"',
-		     '-DDBUS_POLICY_SRC="@0@/@1@"'.format(project_build_root, 'org.freedesktop.ratbag_devel1.conf'),
-		     '-DDBUS_POLICY_DST="@0@/@1@"'.format(dbussystemdir, 'org.freedesktop.ratbag_devel1.conf'),
+		     '-DDBUS_POLICY_SRC="@0@/@1@"'.format(project_build_root, 'org.freedesktop.ghostcat_devel1.conf'),
+		     '-DDBUS_POLICY_DST="@0@/@1@"'.format(dbussystemdir, 'org.freedesktop.ghostcat_devel1.conf'),
 		     '-DDISABLE_COREDUMP=1'],
 )
 
@@ -519,11 +519,11 @@ if not dep_python3.found()
 endif
 
 config_ratbagctl = configuration_data()
-config_ratbagctl.set('RATBAGD_API_VERSION', ghostcatd_api_version)
+config_ratbagctl.set('GHOSTCATD_API_VERSION', ghostcatd_api_version)
 config_ratbagctl.set('version', meson.project_version())
 
-ratbagctl_body = configure_file(input : 'tools/ratbagctl.body.py.in',
-			      output : 'ratbagctl.body.py',
+ratbagctl_body = configure_file(input : 'tools/ghostcatctl.body.py.in',
+			      output : 'ghostcatctl.body.py',
 			      configuration: config_ratbagctl)
 
 # ratbagctl is the commandline tool to interact with ghostcatd over DBus.
@@ -547,23 +547,23 @@ man_ratbagctl = configure_file (
 
 config_ratbagctl_devel = configuration_data()
 config_ratbagctl_devel.set('MESON_BUILD_ROOT', project_build_root)
-config_ratbagctl_devel.set('LIBRATBAG_DATA_DIR', libghostcat_data_dir_devel)
-config_ratbagctl_devel.set('RATBAGD_API_VERSION', ghostcatd_api_version)
+config_ratbagctl_devel.set('LIBGHOSTCAT_DATA_DIR', libghostcat_data_dir_devel)
+config_ratbagctl_devel.set('GHOSTCATD_API_VERSION', ghostcatd_api_version)
 
 configure_file(input : 'tools/toolbox.py',
 	       output : 'toolbox.py',
 	       configuration : config_ratbagctl_devel)
 # ratbagctl.devel starts a custom ghostcatd and interacts with that over DBus
-configure_file(input : 'tools/ratbagctl.devel.py.in',
+configure_file(input : 'tools/ghostcatctl.devel.py.in',
 	       output : 'ratbagctl.devel',
 	       configuration : config_ratbagctl_devel)
 # ratbagctl.test starts a custom ghostcatd and interacts with that over DBus
-configure_file(input : 'tools/ratbagctl.test.py.in',
+configure_file(input : 'tools/ghostcatctl.test.py.in',
 	       output : 'ratbagctl.test',
 	       configuration : config_ratbagctl_devel)
 
 env_test = environment()
-env_test.set('LIBRATBAG_DATA_DIR', libghostcat_data_dir_devel)
+env_test.set('LIBGHOSTCAT_DATA_DIR', libghostcat_data_dir_devel)
 # See: https://github.com/mesonbuild/meson/issues/3306.
 env_test.set('MESON_SOURCE_ROOT', project_source_root)
 ratbagctl_test = find_program(join_paths(project_build_root, 'ratbagctl.test'))
@@ -628,9 +628,9 @@ shared_library(
 
 # ratbagc is the layer that maps ratbagctl to the swig bindings
 ratbagc_py_conf = configuration_data()
-ratbagc_py_conf.set('LIBRATBAG_DATA_DIR', libghostcat_data_dir_devel)
-ratbagc_py = configure_file(input: 'tools/ratbagc.py.in',
-			    output: 'ratbagc.py',
+ratbagc_py_conf.set('LIBGHOSTCAT_DATA_DIR', libghostcat_data_dir_devel)
+ratbagc_py = configure_file(input: 'tools/ghostcatc.py.in',
+			    output: 'ghostcatc.py',
 			    configuration: ratbagc_py_conf)
 
 # ghostcat-command is a commandline tool with the UI as ratbagctl but instead
