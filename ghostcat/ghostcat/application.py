@@ -33,8 +33,32 @@ class Application(Gtk.Application):
         initialization should be done here, to prevent doing duplicate work in
         case another window is opened."""
         Gtk.Application.do_startup(self)
+        self._load_custom_css()
         self._build_app_menu()
         self._ghostcatd: Optional[Ratbagd] = None
+
+    def _load_custom_css(self) -> None:
+        """Load custom CSS styling for the application."""
+        css_provider = Gtk.CssProvider()
+        css = b"""
+        /* Style links in AboutDialog to be purple */
+        GtkAboutDialog GtkLabel link {
+            color: #9b59b6;
+        }
+        GtkAboutDialog GtkLabel link:visited {
+            color: #8e44ad;
+        }
+        GtkAboutDialog GtkLabel link:hover {
+            color: #bb6bd9;
+        }
+        """
+        css_provider.load_from_data(css)
+        screen = Gtk.Window().get_screen()
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
 
     def init_ghostcatd(self) -> Ratbagd:
         if self._ghostcatd is None:

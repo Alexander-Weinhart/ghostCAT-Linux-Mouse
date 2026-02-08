@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=GhostCAT
 Comment=Configurable mouse configuration utility
-Exec=piper
+Exec=ghostcat
 # Translators: Do NOT translate or transliterate this text (this is an icon file name)!
 Icon=org.freedesktop.GhostCAT
 Type=Application

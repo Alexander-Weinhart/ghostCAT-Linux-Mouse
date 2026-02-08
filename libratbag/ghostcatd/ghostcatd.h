@@ -39,7 +39,7 @@
 #include <rbtree/shared-rbtree.h>
 
 #ifndef GHOSTCAT_DBUS_INTERFACE
-#define GHOSTCAT_DBUS_INTERFACE	"ratbag1"
+#define GHOSTCAT_DBUS_INTERFACE	"ghostcat1"
 #else
 #define GHOSTCAT_DEVELOPER_EDITION
 #endif

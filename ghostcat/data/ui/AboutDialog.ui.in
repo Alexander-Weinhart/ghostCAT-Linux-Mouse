@@ -6,10 +6,32 @@
     <property name="can-focus">False</property>
     <property name="modal">True</property>
     <property name="type-hint">normal</property>
-    <property name="program-name">GhostCAT</property>
+    <property name="program-name">GhostCAT
+Cursor Assist Toolchain</property>
     <property name="version">Version: @version@</property>
-    <property name="website">https://github.com/libratbag/piper</property>
+    <property name="website">https://github.com/Alexander-Weinhart/ghostCAT-Linux-Mouse</property>
     <property name="website-label" translatable="yes">Visit GhostCAT on GitHub</property>
+    <property name="authors">Alexander Weinhart</property>
+    <property name="comments">🐱 THE GHOST CAT STORY
+
+In early 2024, I (Alexander Weinhart) accidentally ran over a cat.
+When I started building this mouse configuration tool, I wanted to
+honor that cat. The name serves as a memorial.
+
+RIP. The mice aren't safe in Heaven.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🙏 Special Thanks to the GitHub Community!
+
+GhostCAT would not exist without the incredible work of:
+  • Red Hat, Inc. - creators of libratbag and Piper
+  • David Herrmann - original libratbag author
+  • All libratbag and Piper contributors
+
+Based on Piper and libratbag
+https://github.com/libratbag/piper
+https://github.com/libratbag/libratbag</property>
     <property name="translator-credits" translatable="yes">translator-credits</property>
     <property name="logo-icon-name">org.freedesktop.GhostCAT</property>
     <property name="license-type">gpl-2-0</property>

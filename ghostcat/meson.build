@@ -1,9 +1,9 @@
 project('ghostcat',
-    version: '0.8',
+    version: '0.0.1',
     license: 'GPL-2.0-or-later',
     meson_version: '>= 0.51.0')
 # The tag date of the project_version(), update when the version bumps.
-version_date='2024-09-24'
+version_date='2026-02-07'
 
 # The DBus API version of ghostcatd that we are compatible with. Anything
 # higher or lower will not be compatible so make sure you bumpt that to the
@@ -88,7 +88,7 @@ config_piper.set('pkgdatadir', pkgdatadir)
 config_piper.set('localedir', localedir)
 config_piper.set('gtk_major_version', gtk_major_version)
 config_piper.set('gtk_minor_version', gtk_minor_version)
-config_piper.set('RATBAGD_API_VERSION', ghostcatd_api_version)
+config_piper.set('GHOSTCATD_API_VERSION', ghostcatd_api_version)
 config_piper.set('devel', '')
 
 config_piper_devel = config_piper
@@ -99,12 +99,12 @@ sys.path.insert(1, '@0@')
 print('Running from source tree, using local files')
 '''.format(meson.current_source_dir()))
 
-configure_file(input: 'piper.in',
+configure_file(input: 'ghostcat.in',
                output: 'ghostcat',
                configuration: config_piper,
                install_dir: bindir)
 
-configure_file(input: 'piper.in',
+configure_file(input: 'ghostcat.in',
                output: 'piper.devel',
                configuration: config_piper_devel)
 

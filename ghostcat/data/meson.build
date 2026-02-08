@@ -11,8 +11,8 @@ conf.set('version', meson.project_version())
 conf.set('version_date', version_date)
 
 manpage = configure_file(
-     input: files('piper.1.in'),
-     output: 'piper.1',
+     input: files('ghostcat.1.in'),
+     output: 'ghostcat.1',
      configuration: conf,
 )
 
@@ -57,11 +57,11 @@ endif
 
 svg_mapping = files('svgs/svg-lookup.ini')
 
-gresource = configure_file(input: 'piper.gresource.xml.in',
-                           output: 'piper.gresource.xml',
-                           command: ['generate-piper-gresource.xml.py',
-                                     join_paths(meson.current_source_dir(), 'piper.gresource.xml.in'),
-                                     join_paths(meson.current_build_dir(), 'piper.gresource.xml'),
+gresource = configure_file(input: 'ghostcat.gresource.xml.in',
+                           output: 'ghostcat.gresource.xml',
+                           command: ['generate-ghostcat-gresource.xml.py',
+                                     join_paths(meson.current_source_dir(), 'ghostcat.gresource.xml.in'),
+                                     join_paths(meson.current_build_dir(), 'ghostcat.gresource.xml'),
                                      join_paths(meson.current_source_dir(), 'svgs')])
 
 gnome.compile_resources('ghostcat', gresource,

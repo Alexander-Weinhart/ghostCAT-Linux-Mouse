@@ -16,28 +16,26 @@
 
 </div>
 
-## 🙏 Standing on the Shoulders of Giants
+## 🙏 Special Thanks to the GitHub Community!
 
 GhostCAT would not exist without the incredible work of the **libratbag** and **Piper** communities. This project is a fork and enhancement of their exceptional open-source tools.
 
 **Thank you to:**
-- **Red Hat, Inc.** and **David Herrmann** for creating libratbag
-- **Red Hat, Inc.** for creating Piper
-- All contributors to both projects
+- **Red Hat, Inc.** - creators of libratbag and Piper
+- **David Herrmann** - original libratbag author
+- All libratbag and Piper contributors
 
 See [ATTRIBUTIONS.md](ATTRIBUTIONS.md) for full copyright and attribution details.
 
 ---
 
-## 🐱 The Origin Story
+## 🐱 The Ghost Cat Story
 
-Why "GhostCAT"?
+In early 2024, I (Alexander Weinhart) accidentally ran over a cat. When I started building this mouse configuration tool, I wanted to honor that cat. The name serves as a memorial.
 
-In early 2026, I (Alexander Weinhart) accidentally ran over a cat. It was a devastating moment that stuck with me. When I started building this mouse configuration tool, I wanted to honor that memory. The name serves as a reminder that even in technology, we should be mindful of the impact we have on the world around us.
+The acronym **C**ursor **A**ssist **T**oolchain came later, but the ghost cat was always meant to be the heart of this project.
 
-The acronym **Ghost Cursor Assist Toolchain** came later, but the ghost cat was always meant to be the heart of this project.
-
-Rest in peace, little ghost.
+RIP. The mice aren't safe in Heaven.
 
 ---
 

@@ -346,7 +346,7 @@ static int ghostcatd_new(struct ghostcatd **out)
 	_cleanup_(ghostcatd_freep) struct ghostcatd *ctx = NULL;
 	int r;
 
-	log_verbose("Starting ratbagd version %s (API version %d)\n",
+	log_verbose("Starting ghostcatd version %s (API version %d)\n",
 		 GHOSTCAT_VERSION, GHOSTCATD_API_VERSION);
 
 	ctx = zalloc(sizeof(*ctx));
@@ -360,7 +360,7 @@ static int ghostcatd_new(struct ghostcatd **out)
 	if (r < 0)
 		return r;
 
-	log_verbose("Initializing libratbag\n");
+	log_verbose("Initializing libghostcat\n");
 	ctx->lib_ctx = ghostcat_create_context(&ghostcatd_lib_interface, ctx);
 	if (!ctx->lib_ctx)
 		return -ENOMEM;
@@ -694,10 +694,10 @@ exit:
 
 	if (r < 0) {
 		if (r == -EEXIST) {
-			log_error("Bus name is taken, another instance of ratbagd is already running.\n");
+			log_error("Bus name is taken, another instance of ghostcatd is already running.\n");
 		} else {
 			errno = -r;
-			log_error("Failed to start ratbagd: %m\n");
+			log_error("Failed to start ghostcatd: %m\n");
 		}
 		return EXIT_FAILURE;
 	}
